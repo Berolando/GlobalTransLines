@@ -1,0 +1,279 @@
+﻿using Abstraccion;
+using BE;
+using BE.Enums;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Xml.Linq;
+using MPP.Transversal;
+using BE.Transporte;
+using MPP.Utilidades;
+
+namespace MPP.Bookings
+{
+    public class BookingMPP : IRepositorio<BEBooking>
+    {
+        private string ruta = GeneradorRutas.UbicacionEntidad<BEBooking>();
+
+        #region "Alta"
+
+        public void Alta(BEBooking obj)
+        {
+            try
+            {
+                // Cargar documento XML
+                var doc = XDocument.Load(ruta);
+                obj.Id = ObtenerUltimoId() + 1;
+                obj.Numero = GeneradorNumeros.GenerarNumero(typeof(BEBooking), obj.Id);
+
+                // Crear nodo de booking
+                var nuevoBooking = new XElement("Booking",
+                    new XAttribute("Id", obj.Id),
+                    new XElement("Numero", obj.Numero ?? string.Empty),
+                    new XElement("ClienteId", obj.Cliente != null ? obj.Cliente.Id : 0),
+                    new XElement("FechaGeneracion", obj.FechaGeneracion.ToString("yyyy-MM-ddTHH:mm:ss")),
+                    new XElement("Estado", obj.Estado.ToString()),
+                    new XElement("ContenedorId", obj.Contenedor != null ? obj.Contenedor.Id : 0),
+                    new XElement("BuqueId", obj.Buque != null ? obj.Buque.Id : 0),
+                    new XElement("Cargas",
+                        obj.Cargas != null
+                            ? obj.Cargas.Select(c => new XElement("CargaId", c.Id))
+                            : null
+                    ),
+                    new XElement("Servicios",
+                        obj.Servicios != null
+                            ? obj.Servicios.Select(s => new XElement("ServicioId", s.Id))
+                            : null
+                    )
+                );
+
+                // Agregar al documento
+                var root = doc.Element("Bookings");
+                if (root == null)
+                    doc.Add(new XElement("Bookings", nuevoBooking));
+                else
+                    root.Add(nuevoBooking);
+
+                // Guardar cambios
+                doc.Save(ruta);
+            }
+            catch (IOException ex)
+            {
+                throw new Exception("Error de acceso al archivo XML de bookings", ex);
+            }
+            catch (System.Xml.XmlException ex)
+            {
+                throw new Exception("Error en la estructura del archivo XML de bookings. Línea "
+                    + ex.LineNumber + ", posición " + ex.LinePosition + ". Detalle: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al guardar booking en XML", ex);
+            }
+        }
+
+        #endregion
+
+        #region "Baja"
+
+        public void Baja(BEBooking obj)
+        {
+            try
+            {
+                // Cargar documento XML
+                var doc = XDocument.Load(ruta);
+
+                // Buscar booking por Id
+                var booking = doc.Descendants("Booking")
+                                 .FirstOrDefault(x => (long?)x.Attribute("Id") == obj.Id);
+
+                // Eliminar si existe
+                if (booking != null)
+                {
+                    booking.Remove();
+                    doc.Save(ruta);
+                }
+            }
+            catch (IOException ex)
+            {
+                throw new Exception("Error de acceso al archivo XML de bookings", ex);
+            }
+            catch (System.Xml.XmlException ex)
+            {
+                throw new Exception("Error en la estructura del archivo XML de bookings. Línea "
+                    + ex.LineNumber + ", posición " + ex.LinePosition + ". Detalle: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al eliminar booking en XML", ex);
+            }
+        }
+
+        #endregion
+
+        #region "Modificar"
+
+        public void Modificar(BEBooking obj)
+        {
+            try
+            {
+                // Cargar documento XML
+                var doc = XDocument.Load(ruta);
+
+                // Buscar booking por Id
+                var booking = doc.Descendants("Booking")
+                                 .FirstOrDefault(x => (long?)x.Attribute("Id") == obj.Id);
+
+                // Actualizar si existe
+                if (booking != null)
+                {
+                    booking.SetElementValue("Numero", obj.Numero ?? string.Empty);
+                    booking.SetElementValue("ClienteId", obj.Cliente != null ? obj.Cliente.Id : 0);
+                    booking.SetElementValue("FechaGeneracion", obj.FechaGeneracion.ToString("yyyy-MM-ddTHH:mm:ss"));
+                    booking.SetElementValue("Estado", obj.Estado.ToString());
+                    booking.SetElementValue("ContenedorId", obj.Contenedor != null ? obj.Contenedor.Id : 0);
+                    booking.SetElementValue("BuqueId", obj.Buque != null ? obj.Buque.Id : 0);
+
+                    booking.Element("Cargas")?.Remove();
+                    booking.Add(new XElement("Cargas",
+                        obj.Cargas != null
+                            ? obj.Cargas.Select(c => new XElement("CargaId", c.Id))
+                            : null
+                    ));
+
+                    booking.Element("Servicios")?.Remove();
+                    booking.Add(new XElement("Servicios",
+                        obj.Servicios != null
+                            ? obj.Servicios.Select(s => new XElement("ServicioId", s.Id))
+                            : null
+                    ));
+
+                    doc.Save(ruta);
+                }
+            }
+            catch (IOException ex)
+            {
+                throw new Exception("Error de acceso al archivo XML de bookings", ex);
+            }
+            catch (System.Xml.XmlException ex)
+            {
+                throw new Exception("Error en la estructura del archivo XML de bookings. Línea "
+                    + ex.LineNumber + ", posición " + ex.LinePosition + ". Detalle: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al modificar booking en XML", ex);
+            }
+        }
+
+        #endregion
+
+        #region "Listar / Buscar / Id"
+
+        public List<BEBooking> Listar()
+        {
+            try
+            {
+                // Cargar documento XML
+                var doc = XDocument.Load(ruta);
+
+                // Reconstruir lista de bookings
+                return doc.Descendants("Booking")
+                          .Select(x =>
+                          {
+                              long id = (long?)x.Attribute("Id") ?? 0;
+                              string numero = (string)x.Element("Numero") ?? string.Empty;
+
+                              long clienteId; long.TryParse((string)x.Element("ClienteId"), out clienteId);
+                              DateTime fechaGeneracion; DateTime.TryParse((string)x.Element("FechaGeneracion"), out fechaGeneracion);
+                              EstadoBookingEnum estado; Enum.TryParse((string)x.Element("Estado"), true, out estado);
+                              long contenedorId; long.TryParse((string)x.Element("ContenedorId"), out contenedorId);
+                              long buqueId; long.TryParse((string)x.Element("BuqueId"), out buqueId);
+
+                              var cargas = x.Element("Cargas")?.Elements("CargaId")
+                                  .Select(c => new BECarga { Id = (long?)c ?? 0 })
+                                  .Where(c => c.Id > 0).ToList() ?? new List<BECarga>();
+
+                              var servicios = x.Element("Servicios")?.Elements("ServicioId")
+                                  .Select(s => new BEServicioSubcontratado { Id = (long?)s ?? 0 })
+                                  .Where(s => s.Id > 0).ToList() ?? new List<BEServicioSubcontratado>();
+
+                              return new BEBooking
+                              {
+                                  Id = id,
+                                  Numero = numero,
+                                  Cliente = clienteId > 0 ? new BECliente { Id = clienteId } : null,
+                                  FechaGeneracion = fechaGeneracion,
+                                  Estado = estado,
+                                  Contenedor = contenedorId > 0 ? new BEContenedor { Id = contenedorId } : null,
+                                  Buque = buqueId > 0 ? new BEBuque { Id = buqueId } : null,
+                                  Cargas = cargas,
+                                  Servicios = servicios
+                              };
+                          }).ToList();
+            }
+            catch (IOException ex)
+            {
+                throw new Exception("Error de acceso al archivo XML de bookings", ex);
+            }
+            catch (System.Xml.XmlException ex)
+            {
+                throw new Exception("Error en la estructura del archivo XML de bookings. Línea "
+                    + ex.LineNumber + ", posición " + ex.LinePosition + ". Detalle: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar bookings desde XML", ex);
+            }
+        }
+
+        public BEBooking BuscarPorId(long id)
+        {
+            try
+            {
+                return Listar().FirstOrDefault(b => b.Id == id);
+            }
+            catch (IOException ex)
+            {
+                throw new Exception("Error de acceso al archivo XML de bookings", ex);
+            }
+            catch (System.Xml.XmlException ex)
+            {
+                throw new Exception("Error en la estructura del archivo XML de bookings. Línea "
+                    + ex.LineNumber + ", posición " + ex.LinePosition + ". Detalle: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al buscar booking por Id en XML", ex);
+            }
+        }
+
+        public long ObtenerUltimoId()
+        {
+            try
+            {
+                // Cargar documento XML y devolver Id máximo
+                var doc = XDocument.Load(ruta);
+                return doc.Descendants("Booking").Any()
+                    ? doc.Descendants("Booking").Max(x => (long?)x.Attribute("Id") ?? 0)
+                    : 0;
+            }
+            catch (IOException ex)
+            {
+                throw new Exception("Error de acceso al archivo XML de bookings", ex);
+            }
+            catch (System.Xml.XmlException ex)
+            {
+                throw new Exception("Error en la estructura del archivo XML de bookings. Línea "
+                    + ex.LineNumber + ", posición " + ex.LinePosition + ". Detalle: " + ex.Message, ex);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener último Id de booking en XML", ex);
+            }
+        }
+
+        #endregion
+    }
+}

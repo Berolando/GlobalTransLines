@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{04386E52-014B-4459-ACA0-686E48E308A2}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BLL</RootNamespace>
+    <AssemblyName>BLL</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Transversal\BackupBLL.cs" />
+    <Compile Include="Transversal\BitacoraBLL.cs" />
+    <Compile Include="Transversal\CompositeBLL.cs" />
+    <Compile Include="Transversal\DireccionBLL.cs" />
+    <Compile Include="Transversal\ISeguridad.cs" />
+    <Compile Include="Transversal\PermisoBLL.cs" />
+    <Compile Include="Transversal\ReconstructorBLL.cs" />
+    <Compile Include="Transversal\RolBLL.cs" />
+    <Compile Include="Transversal\SeguridadBLL.cs" />
+    <Compile Include="Transversal\UsuarioBLL.cs" />
+    <Compile Include="Finanzas\CotizacionBLL.cs" />
+    <Compile Include="Finanzas\FacturaBLL.cs" />
+    <Compile Include="Finanzas\OrdenCompraBLL.cs" />
+    <Compile Include="Finanzas\PagoBLL.cs" />
+    <Compile Include="Finanzas\PagoProveedorBLL.cs" />
+    <Compile Include="Personas\ClienteBLL.cs" />
+    <Compile Include="Personas\EmpleadoBLL.cs" />
+    <Compile Include="Personas\ProveedorBLL.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiciosSubcontratados\RecepcionServicioBLL.cs" />
+    <Compile Include="ServiciosSubcontratados\ServicioSubcontratadoBLL.cs" />
+    <Compile Include="Transporte\BillOfLadingBLL.cs" />
+    <Compile Include="Transporte\BookingBLL.cs" />
+    <Compile Include="Transporte\BuqueBLL.cs" />
+    <Compile Include="Transporte\CargaBLL.cs" />
+    <Compile Include="Transporte\ConsolidacionBLL.cs" />
+    <Compile Include="Transporte\ContenedorBLL.cs" />
+    <Compile Include="Transporte\EstibaBLL.cs" />
+    <Compile Include="Transporte\ManifiestoBLL.cs" />
+    <Compile Include="Transversal\ValidadorBLL.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Abstraccion\Abstraccion.csproj">
+      <Project>{32491c02-50dd-4608-960e-22a272d2d389}</Project>
+      <Name>Abstraccion</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BE\BE.csproj">
+      <Project>{0fc3cc38-93f0-44c4-bada-4249756bf2fd}</Project>
+      <Name>BE</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MPP\MPP.csproj">
+      <Project>{ce13dbcc-d1bb-426d-ab6e-413dda2f1646}</Project>
+      <Name>MPP</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Seguridad\Seguridad.csproj">
+      <Project>{82b836b5-69a7-4674-83f5-5476891988dc}</Project>
+      <Name>Seguridad</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
