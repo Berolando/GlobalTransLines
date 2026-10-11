@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.ServiciosSubcontratados;
+using Transversales;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using BE.ServiciosSubcontratados;
-using MPP.Transversal;
 
 namespace MPP.ServiciosSubcontratados
 {
@@ -31,9 +30,9 @@ namespace MPP.ServiciosSubcontratados
                     new XElement("OrdenDeCompraId", obj.OrdenDeCompra != null ? obj.OrdenDeCompra.Id : 0)
                 );
 
-                var root = doc.Element("RecepcionesServicio");
+                var root = doc.Element("RecepcionServicios");
                 if (root == null)
-                    doc.Add(new XElement("RecepcionesServicio", nuevaRecepcion));
+                    doc.Add(new XElement("RecepcionServicios", nuevaRecepcion));
                 else
                     root.Add(nuevaRecepcion);
 

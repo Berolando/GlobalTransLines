@@ -1,21 +1,16 @@
-﻿using BE.Enums;
-using System;
+﻿using BE.Dominio;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 
-namespace BE
+namespace BE.Transporte
 {
     public class BEContenedor : BEEntidad
     {
         #region Propiedades
-        public string Codigo { get; set; } // Ej: "MSCU1234567"
-        public TipoContenedorEnum Tipo { get; set; }
-        public decimal CapacidadPeso { get; set; }    // toneladas
-        public decimal CapacidadVolumen { get; set; } // m3
-        public EstadoContenedorEnum Estado { get; set; }
+        public string Codigo { get; set; } 
+        public TipoContenedor Tipo { get; set; }
+        public EstadoContenedor Estado { get; set; }
+        public RestriccionContenedor Restriccion { get; set; }
         public List<BECarga> Cargas { get; set; }
         public BEBuque Buque { get; set; }
         #endregion
@@ -26,13 +21,12 @@ namespace BE
             Cargas = new List<BECarga>();
         }
 
-        public BEContenedor(string codigo, TipoContenedorEnum tipo, decimal capacidadPeso, decimal capacidadVolumen, EstadoContenedorEnum estado)
+        public BEContenedor(string codigo, TipoContenedor tipo, EstadoContenedor estado)
             : this()
         {
             Codigo = codigo;
             Tipo = tipo;
-            CapacidadPeso = capacidadPeso;
-            CapacidadVolumen = capacidadVolumen;
+           
             Estado = estado;
         }
         #endregion

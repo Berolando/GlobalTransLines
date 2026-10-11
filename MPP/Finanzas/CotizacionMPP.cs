@@ -1,13 +1,16 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using BE.Personas;
+using BE.ServiciosSubcontratados;
+using BE.Transporte;
+using Transversales;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE.Finanzas;
-using BE;
-using BE.Enums;
-using MPP.Transversal;
 
 namespace MPP.Finanzas
 {
@@ -23,10 +26,13 @@ namespace MPP.Finanzas
             {
                 var doc = XDocument.Load(ruta);
                 obj.Id = ObtenerUltimoId() + 1;
+                obj.Numero = GeneradorNumeros.GenerarNumeroCotizacion(obj.Id);
 
                 var nuevaCotizacion = new XElement("Cotizacion",
                     new XAttribute("Id", obj.Id),
+                    new XElement("Numero", obj.Numero ?? string.Empty),
                     new XElement("ClienteId", obj.Cliente != null ? obj.Cliente.Id : 0),
+                    new XElement("TipoContenedorCodigo", obj.TipoContenedor != null ? obj.TipoContenedor.Codigo : string.Empty),
                     new XElement("Cargas",
                         obj.Cargas != null
                             ? obj.Cargas.Select(c => new XElement("CargaId", c.Id))
@@ -38,7 +44,7 @@ namespace MPP.Finanzas
                             : new List<XElement>()
                     ),
                     new XElement("MontoTotal", obj.MontoTotal),
-                    new XElement("Estado", obj.Estado.ToString()),
+                    new XElement("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty),
                     new XElement("FechaEmision", obj.FechaEmision.ToString("yyyy-MM-ddTHH:mm:ss")),
                     new XElement("FechaVencimiento", obj.FechaVencimiento.ToString("yyyy-MM-ddTHH:mm:ss"))
                 );
@@ -111,10 +117,12 @@ namespace MPP.Finanzas
                                     .FirstOrDefault(x => (long?)x.Attribute("Id") == obj.Id);
                 if (cotizacion != null)
                 {
+                    cotizacion.SetElementValue("Numero", obj.Numero ?? string.Empty);
                     cotizacion.SetElementValue("ClienteId", obj.Cliente != null ? obj.Cliente.Id : 0);
+                    cotizacion.SetElementValue("TipoContenedorCodigo", obj.TipoContenedor != null ? obj.TipoContenedor.Codigo : string.Empty);
                     cotizacion.Element("Cargas")?.Remove();
                     cotizacion.Add(new XElement("Cargas",
-                        obj.Cargas != null? obj.Cargas.Select(c => new XElement("CargaId", c.Id))
+                        obj.Cargas != null ? obj.Cargas.Select(c => new XElement("CargaId", c.Id))
                             : new List<XElement>()
                     ));
                     cotizacion.Element("Servicios")?.Remove();
@@ -124,7 +132,7 @@ namespace MPP.Finanzas
                             : new List<XElement>()
                     ));
                     cotizacion.SetElementValue("MontoTotal", obj.MontoTotal);
-                    cotizacion.SetElementValue("Estado", obj.Estado.ToString());
+                    cotizacion.SetElementValue("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty);
                     cotizacion.SetElementValue("FechaEmision", obj.FechaEmision.ToString("yyyy-MM-ddTHH:mm:ss"));
                     cotizacion.SetElementValue("FechaVencimiento", obj.FechaVencimiento.ToString("yyyy-MM-ddTHH:mm:ss"));
                     doc.Save(ruta);
@@ -158,30 +166,40 @@ namespace MPP.Finanzas
                           .Select(x =>
                           {
                               long id = (long?)x.Attribute("Id") ?? 0;
+                              string numero = (string)x.Element("Numero") ?? string.Empty;
                               long clienteId = (long?)x.Element("ClienteId") ?? 0;
                               DateTime.TryParse((string)x.Element("FechaEmision"), out DateTime fechaEmision);
                               DateTime.TryParse((string)x.Element("FechaVencimiento"), out DateTime fechaVenc);
-                              decimal.TryParse((string)x.Element("MontoTotal"), out decimal monto);
-                              EstadoCotizacionEnum estado;
-                              Enum.TryParse((string)x.Element("Estado"), true, out estado);
+                              decimal.TryParse((string)x.Element("MontoTotal"), NumberStyles.Any,
+                                  CultureInfo.InvariantCulture, out decimal monto);
+                              string codigoEstado = (string)x.Element("Estado") ?? string.Empty;
+                              var estado = EstadoCotizacion.ObtenerPorCodigo(codigoEstado);
+                              var tipoContenedorCodigo = (string)x.Element("TipoContenedorCodigo") ?? string.Empty;
+                              var tipoCont = TipoContenedor.ObtenerPorCodigo(tipoContenedorCodigo);
 
-                              return new BECotizacion
+                              var cot = new BECotizacion
                               {
                                   Id = id,
+                                  Numero = numero,
                                   Cliente = clienteId > 0 ? new BECliente { Id = clienteId } : null,
-                                  Cargas = x.Element("Cargas") != null? x.Element("Cargas").Elements("CargaId")
+                                  Cargas = x.Element("Cargas") != null
+                                      ? x.Element("Cargas").Elements("CargaId")
                                           .Select(c => new BECarga { Id = (long?)c ?? 0 })
                                           .Where(c => c.Id > 0).ToList()
                                       : new List<BECarga>(),
-                                  Servicios = x.Element("Servicios") != null? x.Element("Servicios").Elements("ServicioId")
+                                  Servicios = x.Element("Servicios") != null
+                                      ? x.Element("Servicios").Elements("ServicioId")
                                           .Select(s => new BEServicioSubcontratado { Id = (long?)s ?? 0 })
                                           .Where(s => s.Id > 0).ToList()
                                       : new List<BEServicioSubcontratado>(),
                                   MontoTotal = monto,
                                   Estado = estado,
+                                  TipoContenedor = tipoCont,
                                   FechaEmision = fechaEmision,
                                   FechaVencimiento = fechaVenc
                               };
+
+                              return cot;
                           }).ToList();
             }
             catch (IOException ex)

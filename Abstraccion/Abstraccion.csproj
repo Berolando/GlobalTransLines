@@ -41,8 +41,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IComponente.cs" />
     <Compile Include="IEntidad.cs" />
+    <Compile Include="IGeneradorDocumento.cs" />
     <Compile Include="IGestor.cs" />
     <Compile Include="IRepositorio.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using BE.Personas;
+using BE.ServiciosSubcontratados;
+using BE.Transporte;
+using BLL.Infra;
+using MPP.Finanzas;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Abstraccion;
-using BE.Enums;
-using BE.Finanzas;
-using BE;
-using BLL.Transversal;
-using MPP.Finanzas;
 
 namespace BLL.Finanzas
 {
@@ -31,7 +33,7 @@ namespace BLL.Finanzas
         {
             try
             {
-                // Validaciones base (Estilo Bet v2)
+                // La orden debe quedar asociada a un proveedor y a servicios concretos antes de emitirse.
                 ValidadorBLL.ObjetoNoNulo(obj, "Orden de compra");
                 ValidadorBLL.ObjetoNoNulo(obj.Proveedor, "Proveedor asociado");
                 ValidadorBLL.ListaNoVacia(obj.Servicios, "Servicios subcontratados");
@@ -42,17 +44,16 @@ namespace BLL.Finanzas
                 if (obj.FechaEmision > DateTime.Now)
                     throw new Exception("La fecha de emisión no puede ser futura.");
 
-                // Coherencia mínima si trae booking
+                // Si viene de un booking, la relación debe apuntar a un booking ya persistido.
                 if (obj.BookingOrigen != null && obj.BookingOrigen.Id == 0)
                     throw new Exception("El booking asociado debe estar registrado previamente.");
 
-                // Persistencia
                 if (obj.Id == 0)
                     ordenMPP.Alta(obj);
                 else
                     ordenMPP.Modificar(obj);
 
-                // Cache
+                // El estado de la OC impacta en recepción, pagos y dashboard.
                 ReconstructorBLL.LimpiarCache<BEOrdenDeCompra>();
             }
             catch (Exception ex)
@@ -71,8 +72,8 @@ namespace BLL.Finanzas
             {
                 ValidadorBLL.ObjetoNoNulo(obj, "Orden de compra");
 
-                // No permitir eliminar si ya fue recibida o pagada
-                if (obj.Estado == EstadoOrdenCompraEnum.Recibida || obj.Estado == EstadoOrdenCompraEnum.Pagada)
+                // La OC no se elimina si ya avanzó en el circuito de recepción o pago.
+                if (obj.Estado == EstadoOrdenCompra.Recibida || obj.Estado == EstadoOrdenCompra.Pagada)
                     throw new Exception("No se puede eliminar una orden de compra recibida o pagada.");
 
                 ordenMPP.Baja(obj);
@@ -145,6 +146,58 @@ namespace BLL.Finanzas
             catch (Exception ex)
             {
                 throw new Exception("Error al buscar orden de compra.", ex);
+            }
+        }
+
+        #endregion
+
+        #region "Estados"
+
+        public List<BEOrdenDeCompra> ListarEmitidas()
+        {
+            try
+            {
+                return ListarTodo()
+                    .Where(oc => oc.Estado != null &&
+                                 oc.Estado.Codigo == EstadoOrdenCompra.Emitida.Codigo)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar órdenes de compra emitidas.", ex);
+            }
+        }
+
+        public void MarcarRecibida(BEOrdenDeCompra obj)
+        {
+            CambiarEstado(obj, EstadoOrdenCompra.Recibida);
+        }
+
+        public void MarcarPagada(BEOrdenDeCompra obj)
+        {
+            CambiarEstado(obj, EstadoOrdenCompra.Pagada);
+        }
+
+        private void CambiarEstado(BEOrdenDeCompra obj, EstadoOrdenCompra nuevoEstado)
+        {
+            try
+            {
+                ValidadorBLL.ObjetoNoNulo(obj, "Orden de compra");
+                ValidadorBLL.ObjetoNoNulo(nuevoEstado, "Estado de orden de compra");
+
+                var orden = ordenMPP.BuscarPorId(obj.Id);
+                if (orden == null)
+                    throw new Exception("No se encontró la orden de compra especificada.");
+
+                // El cambio de estado se hace desde la BLL para mantener ordenado el flujo EMI -> REC -> PAG.
+                orden.Estado = nuevoEstado;
+                ordenMPP.Modificar(orden);
+
+                ReconstructorBLL.LimpiarCache<BEOrdenDeCompra>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al cambiar el estado de la orden de compra.", ex);
             }
         }
 

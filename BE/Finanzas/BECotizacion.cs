@@ -1,20 +1,23 @@
-﻿using BE.Enums;
+﻿using BE.Dominio;
+using BE.Personas;
+using BE.ServiciosSubcontratados;
+using BE.Transporte;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BE.Finanzas
 {
-    public class BECotizacion:BEEntidad
+    public class BECotizacion : BEEntidad
     {
         #region "Propiedades"
+
+        public string Numero { get; set; }
         public BECliente Cliente { get; set; }
         public List<BECarga> Cargas { get; set; } = new List<BECarga>();
         public List<BEServicioSubcontratado> Servicios { get; set; } = new List<BEServicioSubcontratado>();
+        public TipoContenedor TipoContenedor { get; set; }
         public decimal MontoTotal { get; set; }
-        public EstadoCotizacionEnum Estado { get; set; }
+        public EstadoCotizacion Estado { get; set; }
         public DateTime FechaEmision { get; set; }
         public DateTime FechaVencimiento { get; set; }
         #endregion
@@ -22,19 +25,18 @@ namespace BE.Finanzas
         #region "Constructores"
         public BECotizacion() { }
 
-        public BECotizacion(BECliente cliente, List<BECarga> cargas, List<BEServicioSubcontratado> servicios, decimal montoTotal, DateTime fechaEmision, DateTime fechaVencimiento)
+      public BECotizacion(BECliente cliente, TipoContenedor contenedor, DateTime fechaEmision, DateTime fechaVencimiento, EstadoCotizacion estado)
         {
             Cliente = cliente;
-            Cargas = cargas ?? new List<BECarga>();
-            Servicios = servicios ?? new List<BEServicioSubcontratado>();
-            MontoTotal = montoTotal;
-            Estado = EstadoCotizacionEnum.Pendiente;
+            TipoContenedor = contenedor;
             FechaEmision = fechaEmision;
             FechaVencimiento = fechaVencimiento;
+            Estado = estado;
         }
         #endregion
 
         #region "Métodos"
+
         public override string ToString()
         {
             return $"Cotización para {Cliente?.Nombre} - Total: {MontoTotal:C} - Estado: {Estado}";

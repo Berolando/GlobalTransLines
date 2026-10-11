@@ -1,10 +1,10 @@
-ï»¿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Abstraccion;
-using BE;
+using BE.Personas;
+using BE.Transporte;
+using BLL.Infra;
 using MPP.Documentacion;
-using BLL.Transversal;
+using System;
+using System.Collections.Generic;
 
 namespace BLL.Transporte
 {
@@ -12,9 +12,9 @@ namespace BLL.Transporte
     {
         private BillofLadingMPP billMPP = new BillofLadingMPP();
 
-        #region "Constructor estÃ¡tico"
+        #region "Constructor estático"
 
-        // Registra cÃ³mo reconstruir un Bill of Lading por Id
+        // Registra cómo reconstruir un Bill of Lading por Id
         static BillOfLadingBLL()
         {
             ReconstructorBLL.Registrar<BEBillofLading>(
@@ -30,7 +30,7 @@ namespace BLL.Transporte
         {
             try
             {
-                // Validaciones
+                // El Bill of Lading se emite sobre un booking operativo y datos documentales completos.
                 ValidadorBLL.ObjetoNoNulo(obj, "Bill of Lading");
                 ValidadorBLL.ObjetoNoNulo(obj.Booking, "Booking asociado");
                 ValidadorBLL.ObjetoNoNulo(obj.Cliente, "Cliente asociado");
@@ -40,14 +40,19 @@ namespace BLL.Transporte
                 ValidadorBLL.CampoObligatorio(obj.PuertoDestino, "Puerto de destino");
 
                 if (obj.FechaEmision > DateTime.Now)
-                    throw new Exception("La fecha de emisiÃ³n no puede ser futura.");
+                    throw new Exception("La fecha de emisión no puede ser futura.");
+
+                if (obj.Id == 0 && billMPP.Listar().Exists(b => b.Booking != null &&
+                                                                 obj.Booking != null &&
+                                                                 b.Booking.Id == obj.Booking.Id))
+                    throw new Exception("El booking seleccionado ya tiene un Bill of Lading emitido.");
 
                 if (obj.Id == 0)
                     billMPP.Alta(obj);
                 else
                     billMPP.Modificar(obj);
 
-                // Limpieza de cache
+                // Se limpia la cache para que próximas consultas tomen el documento actualizado.
                 ReconstructorBLL.LimpiarCache<BEBillofLading>();
             }
             catch (Exception ex)
@@ -85,7 +90,7 @@ namespace BLL.Transporte
             {
                 var lista = billMPP.Listar();
 
-                // ReconstrucciÃ³n de relaciones por Id
+                // En XML se guardan referencias por Id; la BLL reconstruye booking y datos relacionados.
                 foreach (var b in lista)
                 {
                     if (b.Booking != null && b.Booking.Id > 0)
@@ -158,7 +163,7 @@ namespace BLL.Transporte
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener Ãºltimo Id de Bill of Lading.", ex);
+                throw new Exception("Error al obtener último Id de Bill of Lading.", ex);
             }
         }
 

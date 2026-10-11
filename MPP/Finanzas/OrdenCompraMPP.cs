@@ -1,14 +1,16 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using BE.Personas;
+using BE.ServiciosSubcontratados;
+using BE.Transporte;
+using Transversales;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE.Finanzas;
-using BE;
-using BE.Enums;
-using MPP.Transversal;
-using MPP.Utilidades;
 
 namespace MPP.Finanzas
 {
@@ -38,13 +40,13 @@ namespace MPP.Finanzas
                             : new List<XElement>()
                     ),
                     new XElement("FechaEmision", obj.FechaEmision.ToString("yyyy-MM-ddTHH:mm:ss")),
-                    new XElement("Estado", obj.Estado.ToString()),
+                    new XElement("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty),
                     new XElement("ImporteTotal", obj.ImporteTotal)
                 );
 
-                var root = doc.Element("OrdenesDeCompra");
+                var root = doc.Element("OrdenDeCompras");
                 if (root == null)
-                    doc.Add(new XElement("OrdenesDeCompra", nuevaOC));
+                    doc.Add(new XElement("OrdenDeCompras", nuevaOC));
                 else
                     root.Add(nuevaOC);
 
@@ -126,7 +128,7 @@ namespace MPP.Finanzas
                     ));
 
                     oc.SetElementValue("FechaEmision", obj.FechaEmision.ToString("yyyy-MM-ddTHH:mm:ss"));
-                    oc.SetElementValue("Estado", obj.Estado.ToString());
+                    oc.SetElementValue("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty);
                     oc.SetElementValue("ImporteTotal", obj.ImporteTotal);
 
                     doc.Save(ruta);
@@ -170,10 +172,11 @@ namespace MPP.Finanzas
                               DateTime.TryParse((string)x.Element("FechaEmision"), out fechaEmision);
 
                               decimal importeTotal;
-                              decimal.TryParse((string)x.Element("ImporteTotal"), out importeTotal);
+                              decimal.TryParse((string)x.Element("ImporteTotal"), NumberStyles.Any,
+                                  CultureInfo.InvariantCulture, out importeTotal);
 
-                              EstadoOrdenCompraEnum estado;
-                              Enum.TryParse((string)x.Element("Estado"), true, out estado);
+                              string codigoEstado = (string)x.Element("Estado") ?? string.Empty;
+                              var estado = EstadoOrdenCompra.ObtenerPorCodigo(codigoEstado);
 
                               return new BEOrdenDeCompra
                               {

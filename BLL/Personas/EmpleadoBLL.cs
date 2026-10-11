@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Personas;
+using BE.Infra;
+using BLL.Infra;
+using MPP.Personas;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Abstraccion;
-using BE;
-using BE.Transversal;
-using MPP.Personas;
-using BLL.Transversal;
 
 namespace BLL.Personas
 {
@@ -15,7 +15,6 @@ namespace BLL.Personas
 
         #region "Constructor estático"
 
-        // Registra cómo reconstruir un empleado por Id
         static EmpleadoBLL()
         {
             ReconstructorBLL.Registrar<BEEmpleado>(
@@ -27,7 +26,6 @@ namespace BLL.Personas
 
         #region "Guardar"
 
-        // Valida y guarda (alta o modificación)
         public void Guardar(BEEmpleado empleado)
         {
             try
@@ -36,13 +34,32 @@ namespace BLL.Personas
                 ValidadorBLL.CampoObligatorio(empleado.Nombre, "Nombre");
                 ValidadorBLL.CampoObligatorio(empleado.Apellido, "Apellido");
                 ValidadorBLL.CampoObligatorio(empleado.Email, "Email");
+                ValidadorBLL.ObjetoNoNulo(empleado.cargoEmpleado, "Cargo");
+
+                if (empleado.Sueldo < 0)
+                    throw new Exception("El sueldo no puede ser negativo.");
+
+                bool dniDuplicado = empleadoMPP.Listar().Any(e =>
+                    e.Activo &&
+                    e.Id != empleado.Id &&
+                    string.Equals(e.DNI, empleado.DNI, StringComparison.OrdinalIgnoreCase));
+
+                if (dniDuplicado)
+                    throw new Exception("Ya existe un empleado activo con el mismo DNI.");
+
+                // La dirección se persiste antes porque el empleado conserva la referencia por Id.
+                if (empleado.Direccion != null)
+                {
+                    var direccionBLL = new DireccionBLL();
+                    direccionBLL.Guardar(empleado.Direccion);
+                }
 
                 if (empleado.Id == 0)
                     empleadoMPP.Alta(empleado);
                 else
                     empleadoMPP.Modificar(empleado);
 
-                // Limpia cache de empleados
+                // La cache se limpia para reconstruir el empleado con sus datos actualizados.
                 ReconstructorBLL.LimpiarCache<BEEmpleado>();
             }
             catch (Exception ex)
@@ -55,15 +72,12 @@ namespace BLL.Personas
 
         #region "Eliminar"
 
-        // Elimina empleado
         public void Eliminar(BEEmpleado empleado)
         {
             try
             {
                 ValidadorBLL.ObjetoNoNulo(empleado, "Empleado");
                 empleadoMPP.Baja(empleado);
-
-                // Limpia cache
                 ReconstructorBLL.LimpiarCache<BEEmpleado>();
             }
             catch (Exception ex)
@@ -76,7 +90,6 @@ namespace BLL.Personas
 
         #region "Listar / Buscar"
 
-        // Lista todos los empleados y reconstruye direcciones
         public List<BEEmpleado> ListarTodo()
         {
             try
@@ -86,7 +99,12 @@ namespace BLL.Personas
                 foreach (var emp in lista)
                 {
                     if (emp.Direccion != null && emp.Direccion.Id > 0)
-                        emp.Direccion = ReconstructorBLL.Reconstruir<BEDireccion>(emp.Direccion.Id);
+                    {
+                        // En XML la dirección queda por Id; la BLL reconstruye el objeto completo.
+                        var dir = ReconstructorBLL.Reconstruir<BEDireccion>(emp.Direccion.Id);
+                        if (dir != null)
+                            emp.Direccion = dir;
+                    }
                 }
 
                 return lista;
@@ -97,7 +115,31 @@ namespace BLL.Personas
             }
         }
 
-        // Busca un empleado por Id
+        public List<BEEmpleado> ListarActivos()
+        {
+            try
+            {
+                var lista = empleadoMPP.Listar();
+
+                foreach (var emp in lista)
+                {
+                    if (emp.Direccion != null && emp.Direccion.Id > 0)
+                    {
+                        // En XML la dirección queda por Id; la BLL reconstruye el objeto completo.
+                        var dir = ReconstructorBLL.Reconstruir<BEDireccion>(emp.Direccion.Id);
+                        if (dir != null)
+                            emp.Direccion = dir;
+                    }
+                }
+
+                return lista.Where(e => e.Activo).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar empleados activos.", ex);
+            }
+        }
+
         public BEEmpleado ListarObjeto(BEEmpleado empleado)
         {
             try
@@ -107,7 +149,12 @@ namespace BLL.Personas
                 var encontrado = empleadoMPP.BuscarPorId(empleado.Id);
 
                 if (encontrado != null && encontrado.Direccion != null)
-                    encontrado.Direccion = ReconstructorBLL.Reconstruir<BEDireccion>(encontrado.Direccion.Id);
+                {
+                    // Se reconstruye la dirección para devolver el empleado completo.
+                    var dir = ReconstructorBLL.Reconstruir<BEDireccion>(encontrado.Direccion.Id);
+                    if (dir != null)
+                        encontrado.Direccion = dir;
+                }
 
                 return encontrado;
             }
@@ -121,7 +168,6 @@ namespace BLL.Personas
 
         #region "Utilitarios"
 
-        // Devuelve el último Id registrado
         public long ObtenerUltimoId()
         {
             try

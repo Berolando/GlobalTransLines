@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Personas;
+using BE.Infra;
+using Transversales;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using BE.Transversal;
-using MPP.Transversal;
 
 namespace MPP.Personas
 {
@@ -25,14 +26,17 @@ namespace MPP.Personas
 
                 var nuevoEmpleado = new XElement("Empleado",
                     new XAttribute("Id", obj.Id),
+                    new XElement("Activo", "true"),
                     new XElement("Nombre", obj.Nombre ?? string.Empty),
                     new XElement("Apellido", obj.Apellido ?? string.Empty),
+                    new XElement("DNI", obj.DNI ?? string.Empty),
                     new XElement("Telefono", obj.Telefono ?? string.Empty),
                     new XElement("Email", obj.Email ?? string.Empty),
-                    new XElement("Cargo", obj.Cargo ?? string.Empty),
-                    new XElement("Sector", obj.Sector ?? string.Empty),
+                    new XElement("FechaNacimiento", obj.FechaNacimiento.ToString("yyyy-MM-dd")),
+                    new XElement("Cargo", obj.cargoEmpleado?.Codigo ?? string.Empty),
                     new XElement("Sueldo", obj.Sueldo),
-                    new XElement("Usuario", obj.Usuario != null ? obj.Usuario.Username : string.Empty),
+                    new XElement("RutaFoto", obj.RutaFoto ?? string.Empty),
+                    
                     new XElement("DireccionId", obj.Direccion != null ? obj.Direccion.Id : 0)
                 );
 
@@ -74,7 +78,7 @@ namespace MPP.Personas
 
                 if (empleado != null)
                 {
-                    empleado.Remove();
+                    empleado.SetElementValue("Activo", "false");
                     doc.Save(ruta);
                 }
             }
@@ -110,12 +114,13 @@ namespace MPP.Personas
                 {
                     empleado.SetElementValue("Nombre", obj.Nombre ?? string.Empty);
                     empleado.SetElementValue("Apellido", obj.Apellido ?? string.Empty);
+                    empleado.SetElementValue("DNI", obj.DNI ?? string.Empty);
                     empleado.SetElementValue("Telefono", obj.Telefono ?? string.Empty);
                     empleado.SetElementValue("Email", obj.Email ?? string.Empty);
-                    empleado.SetElementValue("Cargo", obj.Cargo ?? string.Empty);
-                    empleado.SetElementValue("Sector", obj.Sector ?? string.Empty);
+                    empleado.SetElementValue("FechaNacimiento", obj.FechaNacimiento.ToString("yyyy-MM-dd"));
+                    empleado.SetElementValue("Cargo", obj.cargoEmpleado?.Codigo ?? string.Empty);
                     empleado.SetElementValue("Sueldo", obj.Sueldo);
-                    empleado.SetElementValue("Usuario", obj.Usuario != null ? obj.Usuario.Username : string.Empty);
+                    empleado.SetElementValue("RutaFoto", obj.RutaFoto ?? string.Empty);
                     empleado.SetElementValue("DireccionId", obj.Direccion != null ? obj.Direccion.Id : 0);
                     doc.Save(ruta);
                 }
@@ -151,34 +156,77 @@ namespace MPP.Personas
                               long id = (long?)x.Attribute("Id") ?? 0;
                               string nombre = (string)x.Element("Nombre") ?? string.Empty;
                               string apellido = (string)x.Element("Apellido") ?? string.Empty;
+                              string dni = (string)x.Element("DNI") ?? string.Empty;
                               string telefono = (string)x.Element("Telefono") ?? string.Empty;
                               string email = (string)x.Element("Email") ?? string.Empty;
+                              DateTime fechaNacimiento;
+                              DateTime.TryParse((string)x.Element("FechaNacimiento"), out fechaNacimiento);
                               string cargo = (string)x.Element("Cargo") ?? string.Empty;
-                              string sector = (string)x.Element("Sector") ?? string.Empty;
+                              var cargoEmpleado = CargoEmpleado.ObtenerPorCodigo(cargo);
+                             
+                              
 
                               double sueldo;
                               double.TryParse((string)x.Element("Sueldo"), out sueldo);
+                              string rutaFoto = (string)x.Element("RutaFoto") ?? string.Empty;
 
                               string username = (string)x.Element("Usuario") ?? string.Empty;
-
+                              bool activo = true;
+                              var eActivo = x.Element("Activo");
+                              if (eActivo != null)
+                                  bool.TryParse(eActivo.Value, out activo);
                               long dirId;
                               long.TryParse((string)x.Element("DireccionId"), out dirId);
 
-                              return new BEEmpleado
+                              var empleado = new BEEmpleado()
                               {
                                   Id = id,
                                   Nombre = nombre,
                                   Apellido = apellido,
+                                  DNI = dni,
                                   Telefono = telefono,
                                   Email = email,
-                                  Cargo = cargo,
-                                  Sector = sector,
+                                  FechaNacimiento = fechaNacimiento,
+                                  cargoEmpleado = cargoEmpleado,
                                   Sueldo = sueldo,
-                                  Usuario = !string.IsNullOrEmpty(username)
-                                      ? new BEUsuario { Username = username }
-                                      : null,
-                                  Direccion = dirId > 0 ? new BEDireccion { Id = dirId } : null
+                                  RutaFoto = rutaFoto,
+                                  
+                                  Direccion =  null,
+                                  Activo = activo
                               };
+                              if (dirId > 0)
+                              {
+                                  try
+                                  {
+                                      var direccionMPP = new DireccionMPP();
+                                      var direccion = direccionMPP.BuscarPorId(dirId);
+                                      empleado.Direccion = direccion ?? new BEDireccion { Id = dirId };
+                                  }
+                                  catch
+                                  {
+                                      empleado.Direccion = new BEDireccion { Id = dirId };
+                                  }
+                              }
+
+                              return empleado;
+
+                              //return new BEEmpleado
+                              //{
+                              //    Id = id,
+                              //    Nombre = nombre,
+                              //    Apellido = apellido,
+                              //    DNI = dni,
+                              //    Telefono = telefono,
+                              //    Email = email,
+                              //    FechaNacimiento = fechaNacimiento,
+                              //    cargoEmpleado = cargoEmpleado,
+                              //    Sueldo = sueldo,
+                              //    Usuario = !string.IsNullOrEmpty(username)
+                              //        ? new BEUsuario { Username = username }
+                              //        : null,
+                              //    Direccion = dirId > 0 ? new BEDireccion { Id = dirId } : null,
+                              //    Activo = activo
+                              //};
                           }).ToList();
             }
             catch (IOException ex)

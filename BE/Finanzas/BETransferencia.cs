@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BE.Finanzas
+﻿namespace BE.Finanzas
 {
-    public class BETransferencia:BEMedioDePago
+    public class BETransferencia : BEMedioDePago
     {
         #region Propiedades
         public string Banco { get; set; }
@@ -22,9 +16,10 @@ namespace BE.Finanzas
             CBU = cbu;
         }
         #endregion
+
         #region Metodos
 
-        public override string ToString() 
+        public override string ToString()
         {
             return $"Banco {Banco}";
         }

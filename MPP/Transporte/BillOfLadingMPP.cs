@@ -1,12 +1,13 @@
 ﻿using Abstraccion;
-using BE;
+using BE.Personas;
+using BE.Transporte;
+using Transversales;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using MPP.Transversal;
-using MPP.Utilidades;
+
 
 namespace MPP.Documentacion
 {

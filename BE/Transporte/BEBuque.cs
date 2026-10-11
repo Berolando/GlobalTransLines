@@ -1,31 +1,31 @@
-﻿using System;
+﻿using BE.Dominio;
+using BE.Infra;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BE.Enums;
 
-namespace BE
+namespace BE.Transporte
 {
     public class BEBuque : BEEntidad
     {
         #region Propiedades
         public string Nombre { get; set; }
+        public string Codigo { get; set; }
         public string CodigoIMO { get; set; }
-        public int CapacidadTEU { get; set; }   // Capacidad en contenedores de 20'
+        public int CapacidadTEU { get; set; }   
         public decimal CapacidadPeso { get; set; } // Capacidad máxima en toneladas
         public decimal Disponibilidad { get; set; } // Peso disponible actual
-        public EstadoBuqueEnum Estado { get; set; }
-        public List<string> Itinerarios { get; set; }
+        public EstadoBuque Estado { get; set; }
+        public List<long> ItinerarioPuertoIds { get; set; }
+        public List<BEDireccion> Itinerario { get; set; }
         #endregion
 
         #region Constructores
         public BEBuque()
         {
-            Itinerarios = new List<string>();
+            ItinerarioPuertoIds = new List<long>();
+            Itinerario = new List<BEDireccion>();
         }
 
-        public BEBuque(string nombre, string codigoIMO, int capacidadTEU, decimal capacidadPeso, EstadoBuqueEnum estado)
+        public BEBuque(string nombre, string codigoIMO, int capacidadTEU, decimal capacidadPeso, EstadoBuque estado)
             : this()
         {
             Nombre = nombre;
@@ -33,7 +33,7 @@ namespace BE
             CapacidadTEU = capacidadTEU;
             CapacidadPeso = capacidadPeso;
             Estado = estado;
-            Disponibilidad = capacidadPeso; // al inicio el buque está libre
+           
         }
         #endregion
 

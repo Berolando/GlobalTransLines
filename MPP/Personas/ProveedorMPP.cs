@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Personas;
+using BE.Infra;
+using Transversales;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using BE.Enums;
-using MPP.Transversal;
 
 namespace MPP.Personas
 {
@@ -25,11 +26,16 @@ namespace MPP.Personas
 
                 var nuevoProveedor = new XElement("Proveedor",
                     new XAttribute("Id", obj.Id),
-                    new XElement("RazonSocial", obj.RazonSocial ?? string.Empty),
-                    new XElement("Cuit", obj.Cuit ?? string.Empty),
-                    new XElement("CondicionFiscal", obj.CondicionFiscal.ToString()),
+                    new XElement("Activo", "true"),
+                    new XElement("Nombre", obj.Nombre ?? string.Empty),
+                    new XElement("Apellido", obj.Apellido ?? string.Empty),
+                    new XElement("DNI", obj.DNI ?? string.Empty),
                     new XElement("Telefono", obj.Telefono ?? string.Empty),
                     new XElement("Email", obj.Email ?? string.Empty),
+                    new XElement("FechaNacimiento", obj.FechaNacimiento.ToString("yyyy-MM-dd")),
+                    new XElement("RazonSocial", obj.RazonSocial ?? string.Empty),
+                    new XElement("Cuit", obj.Cuit ?? string.Empty),
+                    new XElement("CondicionFiscal", obj.CondicionFiscal?.Codigo ?? CondicionFiscal.ConsumidorFinal.Codigo),
                     new XElement("DireccionId", obj.Direccion != null ? obj.Direccion.Id : 0)
                 );
 
@@ -71,7 +77,13 @@ namespace MPP.Personas
 
                 if (proveedor != null)
                 {
-                    proveedor.Remove();
+                    var activoElement = proveedor.Element("Activo");
+
+                    if (activoElement == null)
+                        proveedor.Add(new XElement("Activo", "false"));
+                    else
+                        activoElement.Value = "false";
+
                     doc.Save(ruta);
                 }
             }
@@ -86,7 +98,7 @@ namespace MPP.Personas
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al eliminar proveedor en XML", ex);
+                throw new Exception("Error al realizar baja lógica de proveedor en XML", ex);
             }
         }
 
@@ -105,11 +117,15 @@ namespace MPP.Personas
 
                 if (proveedor != null)
                 {
-                    proveedor.SetElementValue("RazonSocial", obj.RazonSocial ?? string.Empty);
-                    proveedor.SetElementValue("Cuit", obj.Cuit ?? string.Empty);
-                    proveedor.SetElementValue("CondicionFiscal", obj.CondicionFiscal.ToString());
+                    proveedor.SetElementValue("Nombre", obj.Nombre ?? string.Empty);
+                    proveedor.SetElementValue("Apellido", obj.Apellido ?? string.Empty);
+                    proveedor.SetElementValue("DNI", obj.DNI ?? string.Empty);
                     proveedor.SetElementValue("Telefono", obj.Telefono ?? string.Empty);
                     proveedor.SetElementValue("Email", obj.Email ?? string.Empty);
+                    proveedor.SetElementValue("FechaNacimiento", obj.FechaNacimiento.ToString("yyyy-MM-dd"));
+                    proveedor.SetElementValue("RazonSocial", obj.RazonSocial ?? string.Empty);
+                    proveedor.SetElementValue("Cuit", obj.Cuit ?? string.Empty);
+                    proveedor.SetElementValue("CondicionFiscal", obj.CondicionFiscal?.Codigo ?? CondicionFiscal.ConsumidorFinal.Codigo);
                     proveedor.SetElementValue("DireccionId", obj.Direccion != null ? obj.Direccion.Id : 0);
                     doc.Save(ruta);
                 }
@@ -143,27 +159,60 @@ namespace MPP.Personas
                           .Select(x =>
                           {
                               long id = (long?)x.Attribute("Id") ?? 0;
-                              string razonSocial = (string)x.Element("RazonSocial") ?? string.Empty;
-                              string cuit = (string)x.Element("Cuit") ?? string.Empty;
+                              string nombre = (string)x.Element("Nombre") ?? string.Empty;
+                              string apellido = (string)x.Element("Apellido") ?? string.Empty;
+                              string dni = (string)x.Element("DNI") ?? string.Empty;
                               string telefono = (string)x.Element("Telefono") ?? string.Empty;
                               string email = (string)x.Element("Email") ?? string.Empty;
+                              DateTime fechaNacimiento;
+                              DateTime.TryParse((string)x.Element("FechaNacimiento"), out fechaNacimiento);
 
-                              CondicionFiscalEnum condicion;
-                              Enum.TryParse((string)x.Element("CondicionFiscal"), true, out condicion);
+                              string razonSocial = (string)x.Element("RazonSocial") ?? string.Empty;
+                              string cuit = (string)x.Element("Cuit") ?? string.Empty;
+                              string condCod = (string)x.Element("CondicionFiscal") ?? CondicionFiscal.ConsumidorFinal.Codigo;
+                              var condicion = CondicionFiscal.ObtenerPorCodigo(condCod) ?? CondicionFiscal.ConsumidorFinal;
+
+                              bool activo = true;
+                              var eActivo = x.Element("Activo");
+                              if (eActivo != null)
+                                  bool.TryParse(eActivo.Value, out activo);
 
                               long dirId;
                               long.TryParse((string)x.Element("DireccionId"), out dirId);
 
-                              return new BEProveedor
+                              var proveedor = new BEProveedor
                               {
                                   Id = id,
-                                  RazonSocial = razonSocial,
-                                  Cuit = cuit,
+                                  Nombre = nombre,
+                                  Apellido = apellido,
+                                  DNI = dni,
                                   Telefono = telefono,
                                   Email = email,
+                                  FechaNacimiento = fechaNacimiento,
+                                  RazonSocial = razonSocial,
+                                  Cuit = cuit,
                                   CondicionFiscal = condicion,
-                                  Direccion = dirId > 0 ? new BEDireccion { Id = dirId } : null
+                                  Activo = activo,
+                                  Direccion = null
                               };
+
+                              // Reconstrucción segura de dirección
+                              if (dirId > 0)
+                              {
+                                  try
+                                  {
+                                      var direccionMPP = new DireccionMPP();
+                                      var direcciones = direccionMPP.Listar();
+                                      var direccion = direcciones.FirstOrDefault(d => d.Id == dirId);
+                                      proveedor.Direccion = direccion ?? new BEDireccion { Id = dirId };
+                                  }
+                                  catch (Exception)
+                                  {
+                                      proveedor.Direccion = new BEDireccion { Id = dirId };
+                                  }
+                              }
+
+                              return proveedor;
                           }).ToList();
             }
             catch (IOException ex)

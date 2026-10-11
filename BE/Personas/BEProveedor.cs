@@ -1,17 +1,15 @@
-﻿using BE.Enums;
-using System;
+﻿
+using BE.Dominio;
+using BE.ServiciosSubcontratados;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BE
+namespace BE.Personas
 {
-    public class BEProveedor:BEPersona
+    public class BEProveedor : BEPersona
     {
         #region "Propiedades"
         public string Cuit { get; set; }
-        public CondicionFiscalEnum CondicionFiscal { get; set; }
+        public CondicionFiscal CondicionFiscal { get; set; }
         public string RazonSocial { get; set; }
         public List<BEServicioSubcontratado> Servicios { get; set; } = new List<BEServicioSubcontratado>();
         #endregion
@@ -24,6 +22,13 @@ namespace BE
         public override string ObtenerContacto()
         {
             return $"{RazonSocial} - CUIT: {Cuit} - Tel: {Telefono} - Email: {Email}";
+        }
+
+        public override string ToString()
+        {
+            return !string.IsNullOrWhiteSpace(RazonSocial)
+                ? RazonSocial
+                : $"{Nombre} {Apellido}";
         }
         #endregion
     }

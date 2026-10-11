@@ -51,6 +51,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -68,17 +69,17 @@
     <Compile Include="Controles\UCDatosComerciales.Designer.cs">
       <DependentUpon>UCDatosComerciales.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\UCDireccion.cs">
+    <Compile Include="Controles\UCDatosPersonales.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controles\UCDireccion.Designer.cs">
-      <DependentUpon>UCDireccion.cs</DependentUpon>
+    <Compile Include="Controles\UCDatosPersonales.Designer.cs">
+      <DependentUpon>UCDatosPersonales.cs</DependentUpon>
     </Compile>
-    <Compile Include="Controles\UcDatosPersonales.cs">
+    <Compile Include="Controles\UCDirecciones.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Controles\UcDatosPersonales.Designer.cs">
-      <DependentUpon>UcDatosPersonales.cs</DependentUpon>
+    <Compile Include="Controles\UCDirecciones.Designer.cs">
+      <DependentUpon>UCDirecciones.cs</DependentUpon>
     </Compile>
     <Compile Include="Controles\UCValidaciones.cs">
       <SubType>UserControl</SubType>
@@ -86,11 +87,23 @@
     <Compile Include="Controles\UCValidaciones.Designer.cs">
       <DependentUpon>UCValidaciones.cs</DependentUpon>
     </Compile>
+    <Compile Include="Gestion2_Transporte\FrmContenedor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gestion2_Transporte\FrmContenedor.Designer.cs">
+      <DependentUpon>FrmContenedor.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gestion1_Booking\FrmBooking.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Gestion1_Booking\FrmBooking.Designer.cs">
       <DependentUpon>FrmBooking.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Gestion2_Transporte\FrmBuque.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gestion2_Transporte\FrmBuque.Designer.cs">
+      <DependentUpon>FrmBuque.cs</DependentUpon>
     </Compile>
     <Compile Include="Gestion1_Booking\FrmCarga.cs">
       <SubType>Form</SubType>
@@ -110,6 +123,12 @@
     <Compile Include="Gestion1_Booking\FrmCotizacion.Designer.cs">
       <DependentUpon>FrmCotizacion.cs</DependentUpon>
     </Compile>
+    <Compile Include="Gestion1_Booking\FrmTarifario.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gestion1_Booking\FrmTarifario.Designer.cs">
+      <DependentUpon>FrmTarifario.cs</DependentUpon>
+    </Compile>
     <Compile Include="Gestion2_Transporte\FrmAsignarBuqueContenedor.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -122,19 +141,16 @@
     <Compile Include="Gestion2_Transporte\FrmBillOfLading.Designer.cs">
       <DependentUpon>FrmBillOfLading.cs</DependentUpon>
     </Compile>
-    <Compile Include="Gestion2_Transporte\FrmConsolidacion.cs">
+    <Compile Include="Gestion1_Booking\FrmCotizaciones.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Gestion2_Transporte\FrmConsolidacion.Designer.cs">
-      <DependentUpon>FrmConsolidacion.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Gestion2_Transporte\FrmEstiba.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Gestion2_Transporte\FrmEstiba.Designer.cs">
-      <DependentUpon>FrmEstiba.cs</DependentUpon>
+    <Compile Include="Gestion1_Booking\FrmCotizaciones.Designer.cs">
+      <DependentUpon>FrmCotizaciones.cs</DependentUpon>
     </Compile>
     <Compile Include="Gestion2_Transporte\FrmManifiesto.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Gestion2_Transporte\FrmPuerto.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Gestion2_Transporte\FrmManifiesto.Designer.cs">
@@ -151,12 +167,6 @@
     </Compile>
     <Compile Include="Gestion3_Facturacion\FrmPago.Designer.cs">
       <DependentUpon>FrmPago.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Gestion4_Proveedores\FrmComprobantePago.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Gestion4_Proveedores\FrmComprobantePago.Designer.cs">
-      <DependentUpon>FrmComprobantePago.cs</DependentUpon>
     </Compile>
     <Compile Include="Gestion4_Proveedores\FrmOrdenCompra.cs">
       <SubType>Form</SubType>
@@ -188,70 +198,82 @@
     <Compile Include="Gestion4_Proveedores\FrmServicioSubcontratado.Designer.cs">
       <DependentUpon>FrmServicioSubcontratado.cs</DependentUpon>
     </Compile>
-    <Compile Include="Reportes\FmrDashboard.cs">
+    <Compile Include="Infra\FrmRolesYPermisos.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Reportes\FmrDashboard.Designer.cs">
-      <DependentUpon>FmrDashboard.cs</DependentUpon>
+    <Compile Include="Infra\FrmRolesYPermisos.Designer.cs">
+      <DependentUpon>FrmRolesYPermisos.cs</DependentUpon>
     </Compile>
-    <Compile Include="Reportes\FrmReportesPorGestion.cs">
+    <Compile Include="Infra\FrmSeleccionRoles.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Reportes\FrmReportesPorGestion.Designer.cs">
-      <DependentUpon>FrmReportesPorGestion.cs</DependentUpon>
+    <Compile Include="Infra\FrmSeleccionRoles.Designer.cs">
+      <DependentUpon>FrmSeleccionRoles.cs</DependentUpon>
     </Compile>
-    <Compile Include="Transversales\FmrEmpleado.cs">
+    <Compile Include="Infra\FrmSeleccionPermisos.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Transversales\FmrEmpleado.Designer.cs">
-      <DependentUpon>FmrEmpleado.cs</DependentUpon>
+    <Compile Include="Infra\FrmSeleccionPermisos.Designer.cs">
+      <DependentUpon>FrmSeleccionPermisos.cs</DependentUpon>
     </Compile>
-    <Compile Include="Transversales\MenuPrincipal.cs">
+    <Compile Include="Reportes\FrmDashboard.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Transversales\MenuPrincipal.Designer.cs">
+    <Compile Include="Reportes\FrmDashboard.Designer.cs">
+      <DependentUpon>FrmDashboard.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Reportes\FrmReportes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reportes\FrmReportes.Designer.cs">
+      <DependentUpon>FrmReportes.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Infra\FrmEmpleado.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Infra\FrmEmpleado.Designer.cs">
+      <DependentUpon>FrmEmpleado.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Infra\MenuPrincipal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Infra\MenuPrincipal.Designer.cs">
       <DependentUpon>MenuPrincipal.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Transversales\FrmBackup.cs">
+    <Compile Include="Infra\FrmBackup.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Transversales\FrmBackup.Designer.cs">
+    <Compile Include="Infra\FrmBackup.Designer.cs">
       <DependentUpon>FrmBackup.cs</DependentUpon>
     </Compile>
-    <Compile Include="Transversales\FrmBitacora.cs">
+    <Compile Include="Infra\FrmBitacora.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Transversales\FrmBitacora.Designer.cs">
+    <Compile Include="Infra\FrmBitacora.Designer.cs">
       <DependentUpon>FrmBitacora.cs</DependentUpon>
     </Compile>
-    <Compile Include="Transversales\FmrRolesYPermisos.cs">
+    <Compile Include="Infra\FrmLogin.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Transversales\FmrRolesYPermisos.Designer.cs">
-      <DependentUpon>FmrRolesYPermisos.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Transversales\FrmLogin.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Transversales\FrmLogin.Designer.cs">
+    <Compile Include="Infra\FrmLogin.Designer.cs">
       <DependentUpon>FrmLogin.cs</DependentUpon>
     </Compile>
-    <Compile Include="Transversales\FrmUsuario.cs">
+    <Compile Include="Infra\FrmUsuario.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Transversales\FrmUsuario.Designer.cs">
+    <Compile Include="Infra\FrmUsuario.Designer.cs">
       <DependentUpon>FrmUsuario.cs</DependentUpon>
     </Compile>
     <EmbeddedResource Include="Controles\UCDatosComerciales.resx">
       <DependentUpon>UCDatosComerciales.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Controles\UCDireccion.resx">
-      <DependentUpon>UCDireccion.cs</DependentUpon>
+    <EmbeddedResource Include="Controles\UCDatosPersonales.resx">
+      <DependentUpon>UCDatosPersonales.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Controles\UcDatosPersonales.resx">
-      <DependentUpon>UcDatosPersonales.cs</DependentUpon>
+    <EmbeddedResource Include="Controles\UCDirecciones.resx">
+      <DependentUpon>UCDirecciones.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Controles\UCValidaciones.resx">
       <DependentUpon>UCValidaciones.cs</DependentUpon>
@@ -259,23 +281,78 @@
     <EmbeddedResource Include="Gestion1_Booking\FrmBooking.resx">
       <DependentUpon>FrmBooking.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="Gestion1_Booking\FrmCarga.resx">
+      <DependentUpon>FrmCarga.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Gestion1_Booking\FrmCliente.resx">
       <DependentUpon>FrmCliente.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion1_Booking\FrmCotizacion.resx">
+      <DependentUpon>FrmCotizacion.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion2_Transporte\FrmAsignarBuqueContenedor.resx">
+      <DependentUpon>FrmAsignarBuqueContenedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion2_Transporte\FrmBillOfLading.resx">
+      <DependentUpon>FrmBillOfLading.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion2_Transporte\FrmBuque.resx">
+      <DependentUpon>FrmBuque.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion2_Transporte\FrmContenedor.resx">
+      <DependentUpon>FrmContenedor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion1_Booking\FrmCotizaciones.resx">
+      <DependentUpon>FrmCotizaciones.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion2_Transporte\FrmManifiesto.resx">
+      <DependentUpon>FrmManifiesto.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion3_Facturacion\FrmFactura.resx">
+      <DependentUpon>FrmFactura.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion3_Facturacion\FrmPago.resx">
+      <DependentUpon>FrmPago.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion4_Proveedores\FrmOrdenCompra.resx">
+      <DependentUpon>FrmOrdenCompra.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Gestion4_Proveedores\FrmPagoProveedor.resx">
+      <DependentUpon>FrmPagoProveedor.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Gestion4_Proveedores\FrmProveedor.resx">
       <DependentUpon>FrmProveedor.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\FmrDashboard.resx">
-      <DependentUpon>FmrDashboard.cs</DependentUpon>
+    <EmbeddedResource Include="Gestion4_Proveedores\FrmServicioSubcontratado.resx">
+      <DependentUpon>FrmServicioSubcontratado.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Reportes\FrmReportesPorGestion.resx">
-      <DependentUpon>FrmReportesPorGestion.cs</DependentUpon>
+    <EmbeddedResource Include="Infra\FrmRolesYPermisos.resx">
+      <DependentUpon>FrmRolesYPermisos.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Transversales\FmrEmpleado.resx">
-      <DependentUpon>FmrEmpleado.cs</DependentUpon>
+    <EmbeddedResource Include="Infra\FrmSeleccionRoles.resx">
+      <DependentUpon>FrmSeleccionRoles.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Transversales\MenuPrincipal.resx">
+    <EmbeddedResource Include="Infra\FrmSeleccionPermisos.resx">
+      <DependentUpon>FrmSeleccionPermisos.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reportes\FrmDashboard.resx">
+      <DependentUpon>FrmDashboard.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Reportes\FrmReportes.resx">
+      <DependentUpon>FrmReportes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Infra\FrmBackup.resx">
+      <DependentUpon>FrmBackup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Infra\FrmBitacora.resx">
+      <DependentUpon>FrmBitacora.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Infra\FrmEmpleado.resx">
+      <DependentUpon>FrmEmpleado.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Infra\MenuPrincipal.resx">
       <DependentUpon>MenuPrincipal.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -287,13 +364,10 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="Transversales\FmrRolesYPermisos.resx">
-      <DependentUpon>FmrRolesYPermisos.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Transversales\FrmLogin.resx">
+    <EmbeddedResource Include="Infra\FrmLogin.resx">
       <DependentUpon>FrmLogin.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Transversales\FrmUsuario.resx">
+    <EmbeddedResource Include="Infra\FrmUsuario.resx">
       <DependentUpon>FrmUsuario.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="Properties\Settings.settings">
@@ -310,9 +384,24 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Logo 1.jpg" />
+    <None Include="Resources\Logo.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+        <None Include="Resources\Fondo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\FacturaEncabezadoFondo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="Resources\ReporteEncabezadoFondo.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Abstraccion\Abstraccion.csproj">
+      <Project>{32491c02-50dd-4608-960e-22a272d2d389}</Project>
+      <Name>Abstraccion</Name>
+    </ProjectReference>
     <ProjectReference Include="..\BE\BE.csproj">
       <Project>{0fc3cc38-93f0-44c4-bada-4249756bf2fd}</Project>
       <Name>BE</Name>
@@ -324,6 +413,10 @@
     <ProjectReference Include="..\Seguridad\Seguridad.csproj">
       <Project>{82b836b5-69a7-4674-83f5-5476891988dc}</Project>
       <Name>Seguridad</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Transversales\Transversales.csproj">
+      <Project>{2462d16a-fb35-4542-9d41-d55096d0e2fa}</Project>
+      <Name>Transversales</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -337,6 +430,9 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>false</Install>
     </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\554846.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

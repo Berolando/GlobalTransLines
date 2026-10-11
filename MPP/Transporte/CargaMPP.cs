@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio; // TipoCarga y EstadoCarga
+using BE.Finanzas;
+using BE.Transporte;
+using BE.Infra;
+using Transversales;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using BE.Enums;
-using BE.Transversal;
-using MPP.Transversal;
 
 namespace MPP.Cargas
 {
@@ -19,33 +20,38 @@ namespace MPP.Cargas
 
         public void Alta(BECarga obj)
         {
+            System.Diagnostics.Debug.WriteLine("==> Entrando a CargaMPP.Alta()"); // o Modificar()
+            System.Diagnostics.Debug.WriteLine($"Archivo XML: {ruta}");
+
             try
             {
-                // Cargar documento XML
                 var doc = XDocument.Load(ruta);
-                obj.Id = ObtenerUltimoId() + 1;
 
-                // Crear nodo de carga
+                obj.Id = ObtenerUltimoId() + 1;
+                obj.Codigo = GeneradorNumeros.GenerarNumeroCarga(obj.Id);
+
                 var nuevaCarga = new XElement("Carga",
                     new XAttribute("Id", obj.Id),
+                    new XElement("Codigo", obj.Codigo ?? string.Empty),
                     new XElement("Descripcion", obj.Descripcion ?? string.Empty),
-                    new XElement("Marca", obj.Tipo.ToString()),
+                    new XElement("Tipo", obj.Tipo != null ? obj.Tipo.Codigo : TipoCarga.General.Codigo),
+                    new XElement("TipoContenedorCodigo", obj.TipoContenedor != null ? obj.TipoContenedor.Codigo : string.Empty),
                     new XElement("Peso", obj.Peso),
                     new XElement("Volumen", obj.Volumen),
                     new XElement("OrigenId", obj.Origen != null ? obj.Origen.Id : 0),
+                    new XElement("PuertoEmbarqueId", obj.PuertoEmbarque != null ? obj.PuertoEmbarque.Id : 0),
                     new XElement("DestinoId", obj.Destino != null ? obj.Destino.Id : 0),
                     new XElement("FechaRegistro", obj.FechaRegistro.ToString("yyyy-MM-ddTHH:mm:ss")),
-                    new XElement("FechaEntregaEstimada", obj.FechaEntregaEstimada.ToString("yyyy-MM-ddTHH:mm:ss"))
+                    new XElement("FechaEntregaEstimada", obj.FechaEntregaEstimada.ToString("yyyy-MM-ddTHH:mm:ss")),
+                    new XElement("Estado", obj.Estado != null ? obj.Estado.Codigo : EstadoCarga.Disponible.Codigo)
                 );
 
-                // Agregar al documento
                 var root = doc.Element("Cargas");
                 if (root == null)
                     doc.Add(new XElement("Cargas", nuevaCarga));
                 else
                     root.Add(nuevaCarga);
 
-                // Guardar cambios
                 doc.Save(ruta);
             }
             catch (IOException ex)
@@ -59,6 +65,8 @@ namespace MPP.Cargas
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"==> ERROR en MPP: {ex.Message}");
+
                 throw new Exception("Error al guardar la carga en XML.", ex);
             }
         }
@@ -73,11 +81,9 @@ namespace MPP.Cargas
             {
                 var doc = XDocument.Load(ruta);
 
-                // Buscar nodo por Id
                 var carga = doc.Descendants("Carga")
                                .FirstOrDefault(x => (long?)x.Attribute("Id") == obj.Id);
 
-                // Eliminar si existe
                 if (carga != null)
                 {
                     carga.Remove();
@@ -109,21 +115,23 @@ namespace MPP.Cargas
             {
                 var doc = XDocument.Load(ruta);
 
-                // Buscar carga por Id
                 var carga = doc.Descendants("Carga")
                                .FirstOrDefault(x => (long?)x.Attribute("Id") == obj.Id);
 
-                // Modificar si existe
                 if (carga != null)
                 {
+                    carga.SetElementValue("Codigo", obj.Codigo ?? string.Empty);
                     carga.SetElementValue("Descripcion", obj.Descripcion ?? string.Empty);
-                    carga.SetElementValue("Marca", obj.Tipo.ToString());
+                    carga.SetElementValue("Tipo", obj.Tipo != null ? obj.Tipo.Codigo : TipoCarga.General.Codigo);
+                    carga.SetElementValue("TipoContenedorCodigo", obj.TipoContenedor != null ? obj.TipoContenedor.Codigo : string.Empty);
                     carga.SetElementValue("Peso", obj.Peso);
                     carga.SetElementValue("Volumen", obj.Volumen);
                     carga.SetElementValue("OrigenId", obj.Origen != null ? obj.Origen.Id : 0);
+                    carga.SetElementValue("PuertoEmbarqueId", obj.PuertoEmbarque != null ? obj.PuertoEmbarque.Id : 0);
                     carga.SetElementValue("DestinoId", obj.Destino != null ? obj.Destino.Id : 0);
                     carga.SetElementValue("FechaRegistro", obj.FechaRegistro.ToString("yyyy-MM-ddTHH:mm:ss"));
                     carga.SetElementValue("FechaEntregaEstimada", obj.FechaEntregaEstimada.ToString("yyyy-MM-ddTHH:mm:ss"));
+                    carga.SetElementValue("Estado", obj.Estado != null ? obj.Estado.Codigo : EstadoCarga.Disponible.Codigo);
 
                     doc.Save(ruta);
                 }
@@ -153,45 +161,57 @@ namespace MPP.Cargas
             {
                 var doc = XDocument.Load(ruta);
 
-                // Reconstrucción de objetos Carga
                 return doc.Descendants("Carga")
                           .Select(x =>
                           {
                               long id = (long?)x.Attribute("Id") ?? 0;
+                              string codigo = (string)x.Element("Codigo") ?? string.Empty;
                               string descripcion = (string)x.Element("Descripcion") ?? string.Empty;
 
-                              TipoCargaEnum tipo;
-                              Enum.TryParse((string)x.Element("Marca"), true, out tipo);
+                              string codigoTipo = (string)x.Element("Tipo") ?? TipoCarga.General.Codigo;
+                              var tipo = TipoCarga.ObtenerPorCodigo(codigoTipo) ?? TipoCarga.General;
+                              var tipoContenedorCodigo = (string)x.Element("TipoContenedorCodigo") ?? string.Empty;
+                              var tipoCont = TipoContenedor.ObtenerPorCodigo(tipoContenedorCodigo);
 
                               decimal peso;
-                              decimal.TryParse((string)x.Element("Peso"), out peso);
+                              decimal.TryParse((string)x.Element("Peso"),
+                                  System.Globalization.NumberStyles.Any,
+                                  System.Globalization.CultureInfo.InvariantCulture,
+                                  out peso);
 
                               decimal volumen;
-                              decimal.TryParse((string)x.Element("Volumen"), out volumen);
+                              decimal.TryParse((string)x.Element("Volumen"),
+                                  System.Globalization.NumberStyles.Any,
+                                  System.Globalization.CultureInfo.InvariantCulture,
+                                  out volumen);
 
-                              DateTime fechaRegistro;
-                              DateTime.TryParse((string)x.Element("FechaRegistro"), out fechaRegistro);
+                              DateTime.TryParse((string)x.Element("FechaRegistro"), out DateTime fechaRegistro);
+                              DateTime.TryParse((string)x.Element("FechaEntregaEstimada"), out DateTime fechaEntrega);
 
-                              DateTime fechaEntrega;
-                              DateTime.TryParse((string)x.Element("FechaEntregaEstimada"), out fechaEntrega);
+                              long.TryParse((string)x.Element("OrigenId"), out long origenId);
+                              long.TryParse((string)x.Element("PuertoEmbarqueId"), out long puertoEmbarqueId);
+                              long.TryParse((string)x.Element("DestinoId"), out long destinoId);
 
-                              long origenId;
-                              long.TryParse((string)x.Element("OrigenId"), out origenId);
-
-                              long destinoId;
-                              long.TryParse((string)x.Element("DestinoId"), out destinoId);
+                             
+                              string codigoEstado = (string)x.Element("Estado") ?? EstadoCarga.Disponible.Codigo;
+                              var estado = EstadoCarga.Listar().FirstOrDefault(e => e.Codigo == codigoEstado)
+                                     ?? EstadoCarga.Disponible;  
 
                               return new BECarga
                               {
                                   Id = id,
+                                  Codigo = codigo,
                                   Descripcion = descripcion,
                                   Tipo = tipo,
+                                  TipoContenedor = tipoCont,
                                   Peso = peso,
                                   Volumen = volumen,
                                   Origen = origenId > 0 ? new BEDireccion { Id = origenId } : null,
+                                  PuertoEmbarque = puertoEmbarqueId > 0 ? new BEDireccion { Id = puertoEmbarqueId } : null,
                                   Destino = destinoId > 0 ? new BEDireccion { Id = destinoId } : null,
                                   FechaRegistro = fechaRegistro,
-                                  FechaEntregaEstimada = fechaEntrega
+                                  FechaEntregaEstimada = fechaEntrega,
+                                  Estado = estado
                               };
                           }).ToList();
             }
@@ -236,6 +256,7 @@ namespace MPP.Cargas
             try
             {
                 var doc = XDocument.Load(ruta);
+
                 return doc.Descendants("Carga").Any()
                     ? doc.Descendants("Carga").Max(x => (long?)x.Attribute("Id") ?? 0)
                     : 0;

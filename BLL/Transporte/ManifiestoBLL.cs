@@ -1,11 +1,10 @@
-ï»¿using System;
-using System.Collections.Generic;
-using System.Linq;
 using Abstraccion;
 using BE.Transporte;
+using BLL.Infra;
 using MPP.Transporte;
-using BLL.Transversal;
-using BE;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace BLL.Transporte
 {
@@ -13,9 +12,9 @@ namespace BLL.Transporte
     {
         private ManifiestoMPP manifiestoMPP = new ManifiestoMPP();
 
-        #region "Constructor estÃ¡tico"
+        #region "Constructor estático"
 
-        // Registra cÃ³mo reconstruir un manifiesto por Id
+        // Registra cómo reconstruir un manifiesto por Id
         static ManifiestoBLL()
         {
             ReconstructorBLL.Registrar<BEManifiesto>(
@@ -27,26 +26,48 @@ namespace BLL.Transporte
 
         #region "Guardar"
 
-        // Alta o modificaciÃ³n
+        // El manifiesto agrupa contenedores ya asignados a un buque y destino.
         public void Guardar(BEManifiesto obj)
         {
             try
             {
-                // Validaciones bÃ¡sicas
+                // Se validan datos mínimos del documento antes de persistirlo.
                 ValidadorBLL.ObjetoNoNulo(obj, "Manifiesto");
                 ValidadorBLL.ObjetoNoNulo(obj.Buque, "Buque asociado");
                 ValidadorBLL.CampoObligatorio(obj.AutoridadDestino, "Autoridad de destino");
                 ValidadorBLL.ListaNoVacia(obj.Contenedores, "Contenedores incluidos");
 
                 if (obj.FechaEmision > DateTime.Now)
-                    throw new Exception("La fecha de emisiÃ³n no puede ser futura.");
+                    throw new Exception("La fecha de emisión no puede ser futura.");
+
+                foreach (var contenedor in obj.Contenedores)
+                {
+                    ValidadorBLL.ObjetoNoNulo(contenedor, "Contenedor incluido");
+
+                    if (contenedor.Buque == null || contenedor.Buque.Id != obj.Buque.Id)
+                        throw new Exception("Todos los contenedores del manifiesto deben pertenecer al buque seleccionado.");
+
+                    if (contenedor.Cargas == null || contenedor.Cargas.Count == 0)
+                        throw new Exception("No se pueden incluir contenedores sin carga en el manifiesto.");
+                }
+
+                var destinos = obj.Contenedores
+                    .SelectMany(c => c.Cargas ?? new List<BECarga>())
+                    .Where(c => c.Destino != null)
+                    .Select(c => c.Destino.ToString())
+                    .Where(d => !string.IsNullOrWhiteSpace(d))
+                    .Distinct()
+                    .ToList();
+
+                if (destinos.Count > 1)
+                    throw new Exception("Para este manifiesto simplificado, todos los contenedores deben compartir el mismo destino.");
 
                 if (obj.Id == 0)
                     manifiestoMPP.Alta(obj);
                 else
                     manifiestoMPP.Modificar(obj);
 
-                // Limpieza del cache de manifiestos
+                // Se limpia la cache para que los documentos emitidos se reconstruyan actualizados.
                 ReconstructorBLL.LimpiarCache<BEManifiesto>();
             }
             catch (Exception ex)
@@ -84,7 +105,7 @@ namespace BLL.Transporte
             {
                 var lista = manifiestoMPP.Listar();
 
-                // Reconstruir relaciones por Id (mantiene independencia entre capas)
+                // En XML se guardan referencias por Id; la BLL reconstruye buque y contenedores completos.
                 foreach (var m in lista)
                 {
                     if (m.Buque != null && m.Buque.Id > 0)
@@ -145,7 +166,7 @@ namespace BLL.Transporte
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener Ãºltimo Id de manifiesto.", ex);
+                throw new Exception("Error al obtener último Id de manifiesto.", ex);
             }
         }
 

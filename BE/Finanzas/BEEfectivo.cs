@@ -1,12 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BE.Finanzas
 {
-    public class BEEfectivo: BEMedioDePago
+    public class BEEfectivo : BEMedioDePago
     {
         #region "Propiedades"
         public double MontoEntregado { get; set; }

@@ -1,6 +1,5 @@
-﻿using System;
-using BE.Enums;
-using BE.Finanzas;
+﻿using BE.Dominio;
+using System;
 
 namespace BE.Finanzas
 {
@@ -9,16 +8,16 @@ namespace BE.Finanzas
         #region "Propiedades"
         public BEFactura Factura { get; set; }
         public DateTime Fecha { get; set; }
-        public BEMedioDePago MedioDePago { get; set; }     
+        public BEMedioDePago MedioDePago { get; set; }
         public decimal Importe { get; set; }
         public DateTime FechaPago { get; set; }
-        public EstadoPagoEnum Estado { get; set; }
+        public EstadoPago Estado { get; set; }
         #endregion
 
         #region "Constructores"
         public BEPago() { }
 
-        public BEPago(BEFactura factura, BEMedioDePago medioDePago, decimal importe, DateTime fechaPago, EstadoPagoEnum estado)
+        public BEPago(BEFactura factura, BEMedioDePago medioDePago, decimal importe, DateTime fechaPago, EstadoPago estado)
         {
             Factura = factura;
             MedioDePago = medioDePago;

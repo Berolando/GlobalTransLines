@@ -1,17 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Abstraccion
 {
+    // Define las operaciones de negocio que expone cada BLL hacia la UI.
     public interface IGestor<T> where T : IEntidad
     {
-        void Guardar(T objeto);          // Alta + Modificación
-        void Eliminar(T objeto);         // Baja
-        List<T> ListarTodo();            // Listar todos
-        T ListarObjeto(T objeto);        // Buscar por Id u otro criterio
+        void Guardar(T objeto);
+        void Eliminar(T objeto);
+        List<T> ListarTodo();
+        T ListarObjeto(T objeto);
         long ObtenerUltimoId();
     }
 }

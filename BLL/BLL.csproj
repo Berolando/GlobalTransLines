@@ -41,24 +41,29 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Transversal\BackupBLL.cs" />
-    <Compile Include="Transversal\BitacoraBLL.cs" />
-    <Compile Include="Transversal\CompositeBLL.cs" />
-    <Compile Include="Transversal\DireccionBLL.cs" />
-    <Compile Include="Transversal\ISeguridad.cs" />
-    <Compile Include="Transversal\PermisoBLL.cs" />
-    <Compile Include="Transversal\ReconstructorBLL.cs" />
-    <Compile Include="Transversal\RolBLL.cs" />
-    <Compile Include="Transversal\SeguridadBLL.cs" />
-    <Compile Include="Transversal\UsuarioBLL.cs" />
+    <Compile Include="Finanzas\TarifarioBLL.cs" />
+    <Compile Include="Transporte\AsignacionBLL.cs" />
+    <Compile Include="Infra\BackupBLL.cs" />
+    <Compile Include="Infra\BitacoraBLL.cs" />
+    <Compile Include="Infra\ComponentBLL.cs" />
+    <Compile Include="Infra\DireccionBLL.cs" />
+    <Compile Include="Infra\InicializadorSistema.cs" />
+    <Compile Include="Infra\ISeguridad.cs" />
+    <Compile Include="Infra\PermisoBLL.cs" />
+    <Compile Include="Infra\ReconstructorBLL.cs" />
+    <Compile Include="Infra\RolBLL.cs" />
+    <Compile Include="Infra\SeguridadBLL.cs" />
+    <Compile Include="Infra\UsuarioBLL.cs" />
     <Compile Include="Finanzas\CotizacionBLL.cs" />
     <Compile Include="Finanzas\FacturaBLL.cs" />
     <Compile Include="Finanzas\OrdenCompraBLL.cs" />
+    <Compile Include="Finanzas\RequerimientoCompraBLL.cs" />
     <Compile Include="Finanzas\PagoBLL.cs" />
     <Compile Include="Finanzas\PagoProveedorBLL.cs" />
     <Compile Include="Personas\ClienteBLL.cs" />
     <Compile Include="Personas\EmpleadoBLL.cs" />
     <Compile Include="Personas\ProveedorBLL.cs" />
+    <Compile Include="Reportes\ReporteGestionBLL.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiciosSubcontratados\RecepcionServicioBLL.cs" />
     <Compile Include="ServiciosSubcontratados\ServicioSubcontratadoBLL.cs" />
@@ -66,11 +71,9 @@
     <Compile Include="Transporte\BookingBLL.cs" />
     <Compile Include="Transporte\BuqueBLL.cs" />
     <Compile Include="Transporte\CargaBLL.cs" />
-    <Compile Include="Transporte\ConsolidacionBLL.cs" />
     <Compile Include="Transporte\ContenedorBLL.cs" />
-    <Compile Include="Transporte\EstibaBLL.cs" />
     <Compile Include="Transporte\ManifiestoBLL.cs" />
-    <Compile Include="Transversal\ValidadorBLL.cs" />
+    <Compile Include="Infra\ValidadorBLL.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Abstraccion\Abstraccion.csproj">
@@ -89,6 +92,13 @@
       <Project>{82b836b5-69a7-4674-83f5-5476891988dc}</Project>
       <Name>Seguridad</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Transversales\Transversales.csproj">
+      <Project>{2462d16a-fb35-4542-9d41-d55096d0e2fa}</Project>
+      <Name>Transversales</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

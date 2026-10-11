@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Personas;
+using BE.Infra;
+using Transversales;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using BE.Enums;
-using MPP.Transversal;
 
 namespace MPP.Personas
 {
@@ -25,14 +26,16 @@ namespace MPP.Personas
 
                 var nuevoCliente = new XElement("Cliente",
                     new XAttribute("Id", obj.Id),
+                    new XElement("Activo", "true"),
                     new XElement("Nombre", obj.Nombre ?? string.Empty),
                     new XElement("Apellido", obj.Apellido ?? string.Empty),
                     new XElement("DNI", obj.DNI ?? string.Empty),
                     new XElement("Telefono", obj.Telefono ?? string.Empty),
                     new XElement("Email", obj.Email ?? string.Empty),
+                    new XElement("FechaNacimiento", obj.FechaNacimiento.ToString("yyyy-MM-dd")),
                     new XElement("RazonSocial", obj.RazonSocial ?? string.Empty),
                     new XElement("Cuit", obj.Cuit ?? string.Empty),
-                    new XElement("CondicionFiscal", obj.CondicionFiscal.ToString()),
+                    new XElement("CondicionFiscal", obj.CondicionFiscal?.Codigo ?? string.Empty),
                     new XElement("DireccionId", obj.Direccion != null ? obj.Direccion.Id : 0)
                 );
 
@@ -74,7 +77,18 @@ namespace MPP.Personas
 
                 if (cliente != null)
                 {
-                    cliente.Remove();
+                    var activoElement = cliente.Element("Activo");
+
+                    // Si el elemento no existe (clientes antiguos), lo agregamos
+                    if (activoElement == null)
+                    {
+                        cliente.Add(new XElement("Activo", "false"));
+                    }
+                    else
+                    {
+                        activoElement.Value = "false";
+                    }
+
                     doc.Save(ruta);
                 }
             }
@@ -89,7 +103,7 @@ namespace MPP.Personas
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al eliminar cliente en XML", ex);
+                throw new Exception("Error al realizar baja lógica de cliente en XML", ex);
             }
         }
 
@@ -113,9 +127,10 @@ namespace MPP.Personas
                     cliente.SetElementValue("DNI", obj.DNI ?? string.Empty);
                     cliente.SetElementValue("Telefono", obj.Telefono ?? string.Empty);
                     cliente.SetElementValue("Email", obj.Email ?? string.Empty);
+                    cliente.SetElementValue("FechaNacimiento", obj.FechaNacimiento.ToString("yyyy-MM-dd"));
                     cliente.SetElementValue("RazonSocial", obj.RazonSocial ?? string.Empty);
                     cliente.SetElementValue("Cuit", obj.Cuit ?? string.Empty);
-                    cliente.SetElementValue("CondicionFiscal", obj.CondicionFiscal.ToString());
+                    cliente.SetElementValue("CondicionFiscal", obj.CondicionFiscal?.Codigo ?? string.Empty);
                     cliente.SetElementValue("DireccionId", obj.Direccion != null ? obj.Direccion.Id : 0);
                     doc.Save(ruta);
                 }
@@ -139,6 +154,8 @@ namespace MPP.Personas
 
         #region "Listar / Buscar / Id"
 
+
+
         public List<BECliente> Listar()
         {
             try
@@ -154,16 +171,26 @@ namespace MPP.Personas
                               string dni = (string)x.Element("DNI") ?? string.Empty;
                               string telefono = (string)x.Element("Telefono") ?? string.Empty;
                               string email = (string)x.Element("Email") ?? string.Empty;
+
+                              DateTime.TryParse((string)x.Element("FechaNacimiento"), out DateTime fechaNacimiento);
+
                               string razonSocial = (string)x.Element("RazonSocial") ?? string.Empty;
                               string cuit = (string)x.Element("Cuit") ?? string.Empty;
 
-                              CondicionFiscalEnum condicion;
-                              Enum.TryParse((string)x.Element("CondicionFiscal"), true, out condicion);
+                              string condicionFiscalCod = (string)x.Element("CondicionFiscal") ?? string.Empty;
+                              var condicion = CondicionFiscal.ObtenerPorCodigo(condicionFiscalCod)
+                                              ?? CondicionFiscal.ConsumidorFinal;
 
-                              long dirId;
-                              long.TryParse((string)x.Element("DireccionId"), out dirId);
+                              //  Baja lógica: ahora se lee desde el ELEMENTO <Activo>
+                              bool activo = true;
+                              var eActivo = x.Element("Activo");
+                              if (eActivo != null)
+                                  bool.TryParse(eActivo.Value, out activo);
 
-                              return new BECliente
+                              //  Dirección
+                              long.TryParse((string)x.Element("DireccionId"), out long dirId);
+
+                              var cliente = new BECliente
                               {
                                   Id = id,
                                   Nombre = nombre,
@@ -171,12 +198,32 @@ namespace MPP.Personas
                                   DNI = dni,
                                   Telefono = telefono,
                                   Email = email,
+                                  FechaNacimiento = fechaNacimiento,
                                   RazonSocial = razonSocial,
                                   Cuit = cuit,
                                   CondicionFiscal = condicion,
-                                  Direccion = dirId > 0 ? new BEDireccion { Id = dirId } : null
+                                  Activo = activo,
+                                  Direccion = null
                               };
-                          }).ToList();
+
+                              //  Reconstrucción segura de la dirección
+                              if (dirId > 0)
+                              {
+                                  try
+                                  {
+                                      var direccionMPP = new DireccionMPP();
+                                      var direccion = direccionMPP.BuscarPorId(dirId);
+                                      cliente.Direccion = direccion ?? new BEDireccion { Id = dirId };
+                                  }
+                                  catch
+                                  {
+                                      cliente.Direccion = new BEDireccion { Id = dirId };
+                                  }
+                              }
+
+                              return cliente;
+                          })
+                          .ToList();
             }
             catch (IOException ex)
             {
@@ -192,6 +239,9 @@ namespace MPP.Personas
                 throw new Exception("Error al listar clientes desde XML", ex);
             }
         }
+
+
+
 
         public BECliente BuscarPorId(long id)
         {

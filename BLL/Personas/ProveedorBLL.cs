@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Personas;
+using BE.Infra;
+using BLL.Infra;
+using MPP.Personas;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Abstraccion;
-using BE;
-using BE.Transversal;
-using BE.Enums;
-using MPP.Personas;
-using BLL.Transversal;
 
 namespace BLL.Personas
 {
@@ -28,7 +27,6 @@ namespace BLL.Personas
 
         #region "Guardar"
 
-        // Valida y guarda (alta o modificación)
         public void Guardar(BEProveedor proveedor)
         {
             try
@@ -46,12 +44,19 @@ namespace BLL.Personas
                 if (duplicado)
                     throw new Exception("Ya existe un proveedor con el mismo CUIT.");
 
+                // La dirección se guarda primero porque el proveedor persiste la relación por Id.
+                if (proveedor.Direccion != null)
+                {
+                    var direccionBLL = new DireccionBLL();
+                    direccionBLL.Guardar(proveedor.Direccion);
+                }
+
                 if (proveedor.Id == 0)
                     proveedorMPP.Alta(proveedor);
                 else
                     proveedorMPP.Modificar(proveedor);
 
-                // Limpia cache de proveedores
+                // Se limpia la cache para que futuras consultas reconstruyan el proveedor actualizado.
                 ReconstructorBLL.LimpiarCache<BEProveedor>();
             }
             catch (Exception ex)
@@ -64,15 +69,12 @@ namespace BLL.Personas
 
         #region "Eliminar"
 
-        // Elimina proveedor
         public void Eliminar(BEProveedor proveedor)
         {
             try
             {
                 ValidadorBLL.ObjetoNoNulo(proveedor, "Proveedor");
                 proveedorMPP.Baja(proveedor);
-
-                // Limpia cache
                 ReconstructorBLL.LimpiarCache<BEProveedor>();
             }
             catch (Exception ex)
@@ -85,7 +87,6 @@ namespace BLL.Personas
 
         #region "Listar / Buscar"
 
-        // Lista todos los proveedores y reconstruye direcciones
         public List<BEProveedor> ListarTodo()
         {
             try
@@ -95,7 +96,12 @@ namespace BLL.Personas
                 foreach (var prov in lista)
                 {
                     if (prov.Direccion != null && prov.Direccion.Id > 0)
-                        prov.Direccion = ReconstructorBLL.Reconstruir<BEDireccion>(prov.Direccion.Id);
+                    {
+                        // En XML se guarda la dirección por Id; la BLL reconstruye el proveedor completo.
+                        var dir = ReconstructorBLL.Reconstruir<BEDireccion>(prov.Direccion.Id);
+                        if (dir != null)
+                            prov.Direccion = dir;
+                    }
                 }
 
                 return lista;
@@ -106,7 +112,31 @@ namespace BLL.Personas
             }
         }
 
-        // Busca un proveedor por Id
+        public List<BEProveedor> ListarActivos()
+        {
+            try
+            {
+                var lista = proveedorMPP.Listar();
+
+                foreach (var prov in lista)
+                {
+                    if (prov.Direccion != null && prov.Direccion.Id > 0)
+                    {
+                        // En XML se guarda la dirección por Id; la BLL reconstruye el proveedor completo.
+                        var dir = ReconstructorBLL.Reconstruir<BEDireccion>(prov.Direccion.Id);
+                        if (dir != null)
+                            prov.Direccion = dir;
+                    }
+                }
+
+                return lista.Where(p => p.Activo).ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar proveedores activos.", ex);
+            }
+        }
+
         public BEProveedor ListarObjeto(BEProveedor proveedor)
         {
             try
@@ -116,7 +146,12 @@ namespace BLL.Personas
                 var encontrado = proveedorMPP.BuscarPorId(proveedor.Id);
 
                 if (encontrado != null && encontrado.Direccion != null)
-                    encontrado.Direccion = ReconstructorBLL.Reconstruir<BEDireccion>(encontrado.Direccion.Id);
+                {
+                    // Se reconstruye la dirección para devolver el proveedor completo.
+                    var dir = ReconstructorBLL.Reconstruir<BEDireccion>(encontrado.Direccion.Id);
+                    if (dir != null)
+                        encontrado.Direccion = dir;
+                }
 
                 return encontrado;
             }
@@ -130,7 +165,6 @@ namespace BLL.Personas
 
         #region "Utilitarios"
 
-        // Devuelve el último Id registrado
         public long ObtenerUltimoId()
         {
             try

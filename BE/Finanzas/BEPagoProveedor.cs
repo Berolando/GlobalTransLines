@@ -1,23 +1,25 @@
-﻿using System;
-using BE.Enums;
-using BE.Finanzas;
+﻿using BE.Dominio;
+using System;
 
 namespace BE.Finanzas
 {
     public class BEPagoProveedor : BEEntidad
     {
         #region "Propiedades"
-        public BEOrdenDeCompra OrdenDeCompra { get; set; }   
-        public BEMedioDePago MedioDePago { get; set; }     
-        public decimal Importe { get; set; }                  
-        public DateTime FechaPago { get; set; }             
-        public EstadoPagoEnum Estado { get; set; }           
+        public BEOrdenDeCompra OrdenDeCompra { get; set; }
+        public BEMedioDePago MedioDePago { get; set; }
+        public decimal Importe { get; set; }
+        public DateTime FechaPago { get; set; }
+        public string NumeroFacturaProveedor { get; set; }
+        public DateTime FechaFacturaProveedor { get; set; }
+        public decimal ImporteFacturaProveedor { get; set; }
+        public EstadoPago Estado { get; set; }
         #endregion
 
         #region "Constructores"
         public BEPagoProveedor() { }
 
-        public BEPagoProveedor(BEOrdenDeCompra orden, BEMedioDePago medio, decimal importe, DateTime fecha, EstadoPagoEnum estado)
+        public BEPagoProveedor(BEOrdenDeCompra orden, BEMedioDePago medio, decimal importe, DateTime fecha, EstadoPago estado)
         {
             OrdenDeCompra = orden;
             MedioDePago = medio;

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BE.Finanzas
+﻿namespace BE.Finanzas
 {
-    public abstract class BEMedioDePago:BEEntidad
+    public abstract class BEMedioDePago : BEEntidad
     {
         #region "Propiedades"
         public string Nombre { get; set; }

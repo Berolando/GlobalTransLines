@@ -1,22 +1,19 @@
-﻿using BE.Enums;
+﻿using BE.Dominio;
+using BE.Transporte;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BE.Finanzas
 {
-    public class BEFactura:BEEntidad
+    public class BEFactura : BEEntidad
     {
         #region "Propiedades"
         public string NumeroFactura { get; set; }
         public BEBooking Booking { get; set; }
-        public EstadoFacturaEnum Estado { get; set; }
+        public EstadoFactura Estado { get; set; }
         public DateTime Fecha { get; set; }
         public decimal Impuesto { get; set; }
         public decimal Subtotal { get; set; }
-        public TipoFacturaEnum Tipo { get; set; }
+        public TipoFactura Tipo { get; set; }
         public decimal Total { get; set; }
 
         #endregion
@@ -24,11 +21,11 @@ namespace BE.Finanzas
         #region "Constructores"
         public BEFactura() { }
 
-        public BEFactura(string numeroFactura, BEBooking booking, EstadoFacturaEnum estado, DateTime fecha, decimal subtotal, decimal impuesto, TipoFacturaEnum tipo)
+        public BEFactura(string numeroFactura, BEBooking booking, DateTime fecha, decimal subtotal, decimal impuesto, TipoFactura tipo)
         {
             NumeroFactura = numeroFactura;
             Booking = booking;
-            Estado = estado;
+            Estado = EstadoFactura.Emitida;
             Fecha = fecha;
             Subtotal = subtotal;
             Impuesto = impuesto;

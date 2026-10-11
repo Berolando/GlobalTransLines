@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Transporte;
+using Transversales;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using BE.Transporte;
-using MPP.Transversal;
-using MPP.Utilidades;
+
 
 namespace MPP.Transporte
 {
@@ -177,7 +177,8 @@ namespace MPP.Transporte
                               string autoridad = (string)x.Element("AutoridadDestino") ?? string.Empty;
 
                               decimal peso;
-                              decimal.TryParse((string)x.Element("PesoTotal"), out peso);
+                              decimal.TryParse((string)x.Element("PesoTotal"), NumberStyles.Any,
+                                  CultureInfo.InvariantCulture, out peso);
 
                               var contenedores = x.Element("Contenedores")?
                                   .Elements("ContenedorId")

@@ -1,19 +1,18 @@
-﻿using BE.Transversal;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BE.Infra;
+using BE.Dominio;
 
-namespace BE
+namespace BE.Personas
 {
-    public class BEEmpleado:BEPersona
+    public class BEEmpleado : BEPersona
     {
         #region "Propiedades"
-        public string Cargo { get; set; }
-        public string Sector { get; set; }
+        
+        public CargoEmpleado cargoEmpleado { get; set; }
+       
         public double Sueldo { get; set; }
-        public BEUsuario Usuario { get; set; }   // Relación con seguridad
+
+        public string RutaFoto { get; set; }
+       
         #endregion
 
         #region "Constructores"
@@ -23,7 +22,7 @@ namespace BE
         #region "Métodos"
         public override string ObtenerContacto()
         {
-            return $"{Nombre} {Apellido} - Cargo: {Cargo} - Tel: {Telefono} - Email: {Email}";
+            return $"{Nombre} {Apellido} - Cargo: {cargoEmpleado} - Tel: {Telefono} - Email: {Email}";
         }
         #endregion
     }

@@ -1,12 +1,13 @@
-ï»¿using System;
+using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using BE.ServiciosSubcontratados;
+using BLL.Finanzas;
+using BLL.Infra;
+using MPP.ServiciosSubcontratados;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Abstraccion;
-using BE.ServiciosSubcontratados;
-using BE.Finanzas;
-using MPP.ServiciosSubcontratados;
-using BLL.Transversal;
-using BE;
 
 namespace BLL.ServiciosSubcontratados
 {
@@ -14,9 +15,9 @@ namespace BLL.ServiciosSubcontratados
     {
         private RecepcionServicioMPP recepcionMPP = new RecepcionServicioMPP();
 
-        #region "Constructor estÃ¡tico"
+        #region "Constructor estático"
 
-        // Registra cÃ³mo reconstruir una recepciÃ³n de servicio por Id
+        // Registra cómo reconstruir una recepción de servicio por Id.
         static RecepcionServicioBLL()
         {
             ReconstructorBLL.Registrar<BERecepcionServicio>(
@@ -32,13 +33,12 @@ namespace BLL.ServiciosSubcontratados
         {
             try
             {
-                // Validaciones de negocio
-                ValidadorBLL.ObjetoNoNulo(obj, "RecepciÃ³n de servicio");
+                ValidadorBLL.ObjetoNoNulo(obj, "Recepción de servicio");
                 ValidadorBLL.ObjetoNoNulo(obj.Servicio, "Servicio subcontratado asociado");
                 ValidadorBLL.ObjetoNoNulo(obj.OrdenDeCompra, "Orden de compra asociada");
 
                 if (obj.FechaRecepcion > DateTime.Now)
-                    throw new Exception("La fecha de recepciÃ³n no puede ser futura.");
+                    throw new Exception("La fecha de recepción no puede ser futura.");
 
                 if (string.IsNullOrWhiteSpace(obj.Observaciones))
                     obj.Observaciones = "Sin observaciones.";
@@ -48,12 +48,12 @@ namespace BLL.ServiciosSubcontratados
                 else
                     recepcionMPP.Modificar(obj);
 
-                // Limpieza del cache
+                // La recepción impacta en el circuito de compras, por eso se limpia la cache.
                 ReconstructorBLL.LimpiarCache<BERecepcionServicio>();
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al guardar recepciÃ³n de servicio.", ex);
+                throw new Exception("Error al guardar recepción de servicio.", ex);
             }
         }
 
@@ -65,14 +65,15 @@ namespace BLL.ServiciosSubcontratados
         {
             try
             {
-                ValidadorBLL.ObjetoNoNulo(obj, "RecepciÃ³n de servicio");
+                ValidadorBLL.ObjetoNoNulo(obj, "Recepción de servicio");
                 recepcionMPP.Baja(obj);
 
+                // La recepción impacta en el circuito de compras, por eso se limpia la cache.
                 ReconstructorBLL.LimpiarCache<BERecepcionServicio>();
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al eliminar recepciÃ³n de servicio.", ex);
+                throw new Exception("Error al eliminar recepción de servicio.", ex);
             }
         }
 
@@ -86,7 +87,6 @@ namespace BLL.ServiciosSubcontratados
             {
                 var lista = recepcionMPP.Listar();
 
-                // ReconstrucciÃ³n de relaciones por Id
                 foreach (var r in lista)
                 {
                     if (r.Servicio != null && r.Servicio.Id > 0)
@@ -108,7 +108,7 @@ namespace BLL.ServiciosSubcontratados
         {
             try
             {
-                ValidadorBLL.ObjetoNoNulo(obj, "RecepciÃ³n de servicio");
+                ValidadorBLL.ObjetoNoNulo(obj, "Recepción de servicio");
 
                 var recepcion = recepcionMPP.BuscarPorId(obj.Id);
 
@@ -125,7 +125,48 @@ namespace BLL.ServiciosSubcontratados
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al buscar recepciÃ³n de servicio.", ex);
+                throw new Exception("Error al buscar recepción de servicio.", ex);
+            }
+        }
+
+        #endregion
+
+        #region "Flujo de compras"
+
+        public void ConfirmarRecepcion(BEOrdenDeCompra orden, DateTime fechaRecepcion, string observaciones)
+        {
+            try
+            {
+                ValidadorBLL.ObjetoNoNulo(orden, "Orden de compra");
+
+                var ordenBLL = new OrdenCompraBLL();
+                var ordenCompleta = ordenBLL.ListarObjeto(new BEOrdenDeCompra { Id = orden.Id });
+
+                if (ordenCompleta == null)
+                    throw new Exception("No se encontró la orden de compra especificada.");
+
+                if (ordenCompleta.Estado == null ||
+                    ordenCompleta.Estado.Codigo != EstadoOrdenCompra.Emitida.Codigo)
+                    throw new Exception("Solo se puede confirmar la recepción de una orden emitida.");
+
+                var servicio = ordenCompleta.Servicios?.FirstOrDefault();
+                ValidadorBLL.ObjetoNoNulo(servicio, "Servicio subcontratado asociado");
+
+                // La recepción se registra contra la OC y el servicio por Id, manteniendo el criterio de persistencia XML.
+                Guardar(new BERecepcionServicio
+                {
+                    OrdenDeCompra = new BEOrdenDeCompra { Id = ordenCompleta.Id },
+                    Servicio = new BEServicioSubcontratado { Id = servicio.Id },
+                    FechaRecepcion = fechaRecepcion,
+                    Observaciones = observaciones
+                });
+
+                // Una vez recibido el servicio, la OC queda disponible para el circuito de pago a proveedor.
+                ordenBLL.MarcarRecibida(ordenCompleta);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al confirmar la recepción del servicio.", ex);
             }
         }
 
@@ -141,7 +182,7 @@ namespace BLL.ServiciosSubcontratados
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener Ãºltimo Id de recepciÃ³n de servicio.", ex);
+                throw new Exception("Error al obtener último Id de recepción de servicio.", ex);
             }
         }
 

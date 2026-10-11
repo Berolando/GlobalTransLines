@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BE.Transversal;
+﻿using BE.Infra;
+using System;
 
-namespace BE
+namespace BE.Personas
 {
-    public abstract class BEPersona:BEEntidad
+    public abstract class BEPersona : BEEntidad
     {
         #region "Propiedades"
 
@@ -26,7 +22,7 @@ namespace BE
         #region "Constructores"
         public BEPersona() { }
 
-        public BEPersona( string pNombre, string pApellido, string pDNI, BEDireccion pDireccion, string pTelefono, string pEmail, DateTime pFechaNac )
+        public BEPersona(string pNombre, string pApellido, string pDNI, BEDireccion pDireccion, string pTelefono, string pEmail, DateTime pFechaNac)
         {
             Nombre = pNombre;
             Apellido = pApellido;
@@ -35,8 +31,8 @@ namespace BE
             Direccion = pDireccion;
             Email = pEmail;
             FechaNacimiento = pFechaNac;
-           
-          
+
+
         }
 
         #endregion

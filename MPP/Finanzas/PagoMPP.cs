@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using Transversales;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE.Finanzas;
-using BE.Enums;
-using BE; // BEFactura / medios
-using MPP.Transversal;
 
 namespace MPP.Finanzas
 {
@@ -36,7 +36,7 @@ namespace MPP.Finanzas
                     new XElement("Fecha", obj.Fecha.ToString("yyyy-MM-ddTHH:mm:ss")),
                     new XElement("Importe", obj.Importe),
                     new XElement("FechaPago", obj.FechaPago.ToString("yyyy-MM-ddTHH:mm:ss")),
-                    new XElement("Estado", obj.Estado.ToString()),
+                    new XElement("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty),
                     new XElement("MedioDePagoId", obj.MedioDePago != null ? obj.MedioDePago.Id : 0),
                     new XElement("TipoMedio", tipoMedio)
                 );
@@ -117,7 +117,7 @@ namespace MPP.Finanzas
                     pago.SetElementValue("Fecha", obj.Fecha.ToString("yyyy-MM-ddTHH:mm:ss"));
                     pago.SetElementValue("Importe", obj.Importe);
                     pago.SetElementValue("FechaPago", obj.FechaPago.ToString("yyyy-MM-ddTHH:mm:ss"));
-                    pago.SetElementValue("Estado", obj.Estado.ToString());
+                    pago.SetElementValue("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty);
                     pago.SetElementValue("MedioDePagoId", obj.MedioDePago != null ? obj.MedioDePago.Id : 0);
                     pago.SetElementValue("TipoMedio", obj.MedioDePago != null ? obj.MedioDePago.GetType().Name.Replace("BE", "") : string.Empty);
 
@@ -164,12 +164,14 @@ namespace MPP.Finanzas
                               DateTime.TryParse((string)x.Element("FechaPago"), out fechaPago);
 
                               decimal importe;
-                              decimal.TryParse((string)x.Element("Importe"), out importe);
+                              decimal.TryParse((string)x.Element("Importe"), NumberStyles.Any,
+                                  CultureInfo.InvariantCulture, out importe);
 
-                              EstadoPagoEnum estado;
-                              Enum.TryParse((string)x.Element("Estado"), true, out estado);
+                              string codigoEstado = (string)x.Element("Estado") ?? string.Empty;
+                              var estado = EstadoPago.ObtenerPorCodigo(codigoEstado);
 
-                              // Reconstrucción mínima del medio (solo Id)
+
+                              // Reconstrucción
                               BEMedioDePago medio = null;
                               if (medioId > 0)
                               {

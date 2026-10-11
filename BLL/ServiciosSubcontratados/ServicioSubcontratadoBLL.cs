@@ -1,10 +1,10 @@
-锘縰sing System;
-using System.Collections.Generic;
-using System.Linq;
 using Abstraccion;
-using BE;
+using BE.Personas;
+using BE.ServiciosSubcontratados;
+using BLL.Infra;
 using MPP.ServiciosSubcontratados;
-using BLL.Transversal;
+using System;
+using System.Collections.Generic;
 
 namespace BLL.ServiciosSubcontratados
 {
@@ -12,9 +12,8 @@ namespace BLL.ServiciosSubcontratados
     {
         private ServicioSubcontratadoMPP servicioMPP = new ServicioSubcontratadoMPP();
 
-        #region "Constructor est谩tico"
+        #region "Constructor est醫ico"
 
-        // Registra c贸mo reconstruir un servicio subcontratado por Id
         static ServicioSubcontratadoBLL()
         {
             ReconstructorBLL.Registrar<BEServicioSubcontratado>(
@@ -30,10 +29,10 @@ namespace BLL.ServiciosSubcontratados
         {
             try
             {
-                // Validaciones
+                // El servicio debe tener proveedor porque luego puede generar requerimientos y 髍denes de compra.
                 ValidadorBLL.ObjetoNoNulo(obj, "Servicio subcontratado");
                 ValidadorBLL.CampoObligatorio(obj.Nombre, "Nombre del servicio");
-                ValidadorBLL.CampoObligatorio(obj.Descripcion, "Descripci贸n del servicio");
+                ValidadorBLL.CampoObligatorio(obj.Descripcion, "Descripci髇 del servicio");
                 ValidadorBLL.ObjetoNoNulo(obj.Proveedor, "Proveedor asociado");
 
                 if (obj.Costo <= 0)
@@ -44,7 +43,7 @@ namespace BLL.ServiciosSubcontratados
                 else
                     servicioMPP.Modificar(obj);
 
-                // Limpieza de cache
+                // Se limpia la cache para que bookings, OC y pagos reconstruyan el servicio actualizado.
                 ReconstructorBLL.LimpiarCache<BEServicioSubcontratado>();
             }
             catch (Exception ex)
@@ -82,7 +81,7 @@ namespace BLL.ServiciosSubcontratados
             {
                 var lista = servicioMPP.Listar();
 
-                // Reconstrucci贸n de relaci贸n con proveedor
+                // Reconstrucci髇 de relaci髇 con proveedor
                 foreach (var s in lista)
                 {
                     if (s.Proveedor != null && s.Proveedor.Id > 0)
@@ -128,7 +127,7 @@ namespace BLL.ServiciosSubcontratados
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener 煤ltimo Id de servicio subcontratado.", ex);
+                throw new Exception("Error al obtener 鷏timo Id de servicio subcontratado.", ex);
             }
         }
 

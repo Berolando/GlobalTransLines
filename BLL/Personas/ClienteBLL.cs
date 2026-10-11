@@ -1,12 +1,11 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Personas;
+using BE.Infra;
+using BLL.Infra;
+using MPP.Personas;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Abstraccion;
-using BE;
-using BE.Transversal;
-using BE.Enums;
-using MPP.Personas;
-using BLL.Transversal;
 
 namespace BLL.Personas
 {
@@ -16,7 +15,6 @@ namespace BLL.Personas
 
         #region "Constructor estático"
 
-        // Registra cómo reconstruir un cliente por Id
         static ClienteBLL()
         {
             ReconstructorBLL.Registrar<BECliente>(
@@ -28,50 +26,49 @@ namespace BLL.Personas
 
         #region "Guardar"
 
-        // Valida y guarda (alta o modificación)
         public void Guardar(BECliente cliente)
         {
             try
-            { ValidadorBLL.ObjetoNoNulo(cliente, "Cliente");
-        ValidadorBLL.CampoObligatorio(cliente.Nombre, "Nombre");
-        ValidadorBLL.CampoObligatorio(cliente.RazonSocial, "Razón Social");
-        ValidadorBLL.CampoObligatorio(cliente.Cuit, "CUIT");
+            {
+                ValidadorBLL.ObjetoNoNulo(cliente, "Cliente");
+                ValidadorBLL.CampoObligatorio(cliente.Nombre, "Nombre");
+                ValidadorBLL.CampoObligatorio(cliente.Apellido, "Apellido");
+                ValidadorBLL.CampoObligatorio(cliente.RazonSocial, "Razón Social");
+                ValidadorBLL.CampoObligatorio(cliente.Cuit, "CUIT");
 
-        var lista = clienteMPP.Listar();
-        bool duplicado = lista.Any(c =>
-            c.Cuit.Equals(cliente.Cuit, StringComparison.OrdinalIgnoreCase)
-            && c.Id != cliente.Id);
+                var lista = clienteMPP.Listar();
+                bool duplicado = lista.Any(c =>
+                    c.Cuit.Equals(cliente.Cuit, StringComparison.OrdinalIgnoreCase)
+                    && c.Id != cliente.Id);
 
-        if (duplicado)
-            throw new Exception("Ya existe un cliente con el mismo CUIT.");
+                if (duplicado)
+                    throw new Exception("Ya existe un cliente con el mismo CUIT.");
 
-        // ✅ Guardar o actualizar dirección asociada
-        if (cliente.Direccion != null)
-        {
-            var direccionBLL = new DireccionBLL();
-            direccionBLL.Guardar(cliente.Direccion);
-        }
+                // La dirección se guarda primero porque el cliente persiste la relación por Id.
+                if (cliente.Direccion != null)
+                {
+                    var direccionBLL = new DireccionBLL();
+                    direccionBLL.Guardar(cliente.Direccion);
+                }
 
-        // Guardar cliente
-        if (cliente.Id == 0)
-            clienteMPP.Alta(cliente);
-        else
-            clienteMPP.Modificar(cliente);
+                if (cliente.Id == 0)
+                    clienteMPP.Alta(cliente);
+                else
+                    clienteMPP.Modificar(cliente);
 
-        // Limpia cache de clientes
-        ReconstructorBLL.LimpiarCache<BECliente>();
-    }
-    catch (Exception ex)
-    {
-        throw new Exception("Error al guardar el cliente.", ex);
-    }
+                // Se limpia la cache para que futuras reconstrucciones tomen los datos actualizados.
+                ReconstructorBLL.LimpiarCache<BECliente>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al guardar el cliente.", ex);
+            }
         }
 
         #endregion
 
         #region "Eliminar"
 
-        // Elimina cliente
         public void Eliminar(BECliente cliente)
         {
             try
@@ -79,7 +76,7 @@ namespace BLL.Personas
                 ValidadorBLL.ObjetoNoNulo(cliente, "Cliente");
                 clienteMPP.Baja(cliente);
 
-                // Limpia cache
+                // La baja lógica debe reflejarse en las próximas consultas reconstruidas.
                 ReconstructorBLL.LimpiarCache<BECliente>();
             }
             catch (Exception ex)
@@ -92,7 +89,7 @@ namespace BLL.Personas
 
         #region "Listar / Buscar"
 
-        // Lista todos los clientes y reconstruye direcciones
+        // En XML se guarda la dirección por Id; la BLL reconstruye el cliente completo.
         public List<BECliente> ListarTodo()
         {
             try
@@ -102,7 +99,11 @@ namespace BLL.Personas
                 foreach (var cli in lista)
                 {
                     if (cli.Direccion != null && cli.Direccion.Id > 0)
-                        cli.Direccion = ReconstructorBLL.Reconstruir<BEDireccion>(cli.Direccion.Id);
+                    {
+                        var direccionReconstruida = ReconstructorBLL.Reconstruir<BEDireccion>(cli.Direccion.Id);
+                        if (direccionReconstruida != null)
+                            cli.Direccion = direccionReconstruida;
+                    }
                 }
 
                 return lista;
@@ -113,7 +114,31 @@ namespace BLL.Personas
             }
         }
 
-        // Busca un cliente por Id
+        public List<BECliente> ListarActivos()
+        {
+            try
+            {
+                var lista = clienteMPP.Listar();
+
+                foreach (var cli in lista)
+                {
+                    if (cli.Direccion != null && cli.Direccion.Id > 0)
+                    {
+                        var direccionReconstruida = ReconstructorBLL.Reconstruir<BEDireccion>(cli.Direccion.Id);
+                        if (direccionReconstruida != null)
+                            cli.Direccion = direccionReconstruida;
+                    }
+                }
+
+                return lista.Where(c => c.Activo).ToList();
+            }
+
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar clientes activos.", ex);
+            }
+        }
+
         public BECliente ListarObjeto(BECliente cliente)
         {
             try
@@ -137,7 +162,6 @@ namespace BLL.Personas
 
         #region "Utilitarios"
 
-        // Devuelve el último Id registrado
         public long ObtenerUltimoId()
         {
             try

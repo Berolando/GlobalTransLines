@@ -1,23 +1,18 @@
-﻿using BE;
+﻿using BE.Personas;
 using System;
 using System.Windows.Forms;
 
 namespace GlobalTransLines.UI.Controles
 {
-    public partial class UcDatosPersonales : UserControl
+    public partial class UCDatosPersonales : UserControl
     {
-        private UCDireccion ucDireccion;
-        public UcDatosPersonales()
+        #region "Inicialización"
+
+
+
+        public UCDatosPersonales()
         {
             InitializeComponent();
-            InicializarDireccion();
-        }
-        #region "Inicialización"
-        private void InicializarDireccion()
-        {
-            ucDireccion = new UCDireccion();
-            ucDireccion.Dock = DockStyle.Fill;
-            panelDireccion.Controls.Add(ucDireccion);
         }
         #endregion
         #region "API pública"
@@ -29,7 +24,7 @@ namespace GlobalTransLines.UI.Controles
 
             ucNombre.Texto = persona.Nombre;
             ucApellido.Texto = persona.Apellido;
-            ucDni.Texto = persona.DNI;
+            ucDNI.Texto = persona.DNI;
             ucTelefono.Texto = persona.Telefono;
             ucEmail.Texto = persona.Email;
 
@@ -41,10 +36,11 @@ namespace GlobalTransLines.UI.Controles
             }
             else
             {
-                dtpFechaNacimiento.Value = DateTime.Today; 
+                dtpFechaNacimiento.Value = DateTime.Today;
             }
 
-            ucDireccion.Cargar(persona.Direccion);
+
+
         }
 
         // Valida todos los campos del control
@@ -52,10 +48,10 @@ namespace GlobalTransLines.UI.Controles
         {
             bool valido = ucNombre.EsValido() &&
                           ucApellido.EsValido() &&
-                          ucDni.EsValido() &&
+                          ucDNI.EsValido() &&
                           ucTelefono.EsValido() &&
-                          ucEmail.EsValido() &&
-                          ucDireccion.EsValido();
+                          ucEmail.EsValido();
+
 
             if (!valido)
             {
@@ -71,22 +67,28 @@ namespace GlobalTransLines.UI.Controles
         {
             ucNombre.Texto = string.Empty;
             ucApellido.Texto = string.Empty;
-            ucDni.Texto = string.Empty;
+            ucDNI.Texto = string.Empty;
             ucTelefono.Texto = string.Empty;
             ucEmail.Texto = string.Empty;
             dtpFechaNacimiento.Value = DateTime.Today;
-            ucDireccion.Limpiar();
+
+
         }
 
         #endregion
+
         #region "Propiedades públicas"
         public string Nombre => ucNombre.Texto.Trim();
         public string Apellido => ucApellido.Texto.Trim();
-        public string DNI => ucDni.Texto.Trim();
+        public string DNI => ucDNI.Texto.Trim();
         public string Telefono => ucTelefono.Texto.Trim();
         public string Email => ucEmail.Texto.Trim();
         public DateTime FechaNacimiento => dtpFechaNacimiento.Value;
-        public BEDireccion Direccion => ucDireccion.Obtener();
+
+
+
         #endregion
     }
+
 }
+

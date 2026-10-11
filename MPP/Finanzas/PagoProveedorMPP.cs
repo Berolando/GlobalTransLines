@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using Transversales;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE.Finanzas;
-using BE.Enums;
-using BE;
-using MPP.Transversal;
 
 namespace MPP.Finanzas
 {
@@ -34,14 +34,17 @@ namespace MPP.Finanzas
                     new XElement("OrdenDeCompraId", obj.OrdenDeCompra != null ? obj.OrdenDeCompra.Id : 0),
                     new XElement("Importe", obj.Importe),
                     new XElement("FechaPago", obj.FechaPago.ToString("yyyy-MM-ddTHH:mm:ss")),
-                    new XElement("Estado", obj.Estado.ToString()),
+                    new XElement("NumeroFacturaProveedor", obj.NumeroFacturaProveedor ?? string.Empty),
+                    new XElement("FechaFacturaProveedor", obj.FechaFacturaProveedor.ToString("yyyy-MM-ddTHH:mm:ss")),
+                    new XElement("ImporteFacturaProveedor", obj.ImporteFacturaProveedor),
+                    new XElement("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty),
                     new XElement("MedioDePagoId", obj.MedioDePago != null ? obj.MedioDePago.Id : 0),
                     new XElement("TipoMedio", tipoMedio)
                 );
 
-                var root = doc.Element("PagosProveedores");
+                var root = doc.Element("PagoProveedores");
                 if (root == null)
-                    doc.Add(new XElement("PagosProveedores", nuevoPagoProveedor));
+                    doc.Add(new XElement("PagoProveedores", nuevoPagoProveedor));
                 else
                     root.Add(nuevoPagoProveedor);
 
@@ -114,7 +117,10 @@ namespace MPP.Finanzas
                     pago.SetElementValue("OrdenDeCompraId", obj.OrdenDeCompra != null ? obj.OrdenDeCompra.Id : 0);
                     pago.SetElementValue("Importe", obj.Importe);
                     pago.SetElementValue("FechaPago", obj.FechaPago.ToString("yyyy-MM-ddTHH:mm:ss"));
-                    pago.SetElementValue("Estado", obj.Estado.ToString());
+                    pago.SetElementValue("NumeroFacturaProveedor", obj.NumeroFacturaProveedor ?? string.Empty);
+                    pago.SetElementValue("FechaFacturaProveedor", obj.FechaFacturaProveedor.ToString("yyyy-MM-ddTHH:mm:ss"));
+                    pago.SetElementValue("ImporteFacturaProveedor", obj.ImporteFacturaProveedor);
+                    pago.SetElementValue("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty);
                     pago.SetElementValue("MedioDePagoId", obj.MedioDePago != null ? obj.MedioDePago.Id : 0);
                     pago.SetElementValue("TipoMedio", obj.MedioDePago != null ? obj.MedioDePago.GetType().Name.Replace("BE", "") : string.Empty);
 
@@ -155,13 +161,21 @@ namespace MPP.Finanzas
                               string tipoMedio = (string)x.Element("TipoMedio") ?? string.Empty;
 
                               decimal importe;
-                              decimal.TryParse((string)x.Element("Importe"), out importe);
+                              decimal.TryParse((string)x.Element("Importe"), NumberStyles.Any,
+                                  CultureInfo.InvariantCulture, out importe);
 
                               DateTime fechaPago;
                               DateTime.TryParse((string)x.Element("FechaPago"), out fechaPago);
 
-                              EstadoPagoEnum estado;
-                              Enum.TryParse((string)x.Element("Estado"), true, out estado);
+                              DateTime fechaFacturaProveedor;
+                              DateTime.TryParse((string)x.Element("FechaFacturaProveedor"), out fechaFacturaProveedor);
+
+                              decimal importeFacturaProveedor;
+                              decimal.TryParse((string)x.Element("ImporteFacturaProveedor"), NumberStyles.Any,
+                                  CultureInfo.InvariantCulture, out importeFacturaProveedor);
+
+                              string codigoEstado = (string)x.Element("Estado") ?? string.Empty;
+                              var estado = EstadoPago.ObtenerPorCodigo(codigoEstado);
 
                               BEMedioDePago medio = null;
                               if (medioId > 0)
@@ -186,6 +200,9 @@ namespace MPP.Finanzas
                                   OrdenDeCompra = ordenId > 0 ? new BEOrdenDeCompra { Id = ordenId } : null,
                                   Importe = importe,
                                   FechaPago = fechaPago,
+                                  NumeroFacturaProveedor = (string)x.Element("NumeroFacturaProveedor") ?? string.Empty,
+                                  FechaFacturaProveedor = fechaFacturaProveedor,
+                                  ImporteFacturaProveedor = importeFacturaProveedor,
                                   Estado = estado,
                                   MedioDePago = medio
                               };

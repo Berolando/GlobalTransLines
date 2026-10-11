@@ -1,12 +1,14 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using BE.Transporte;
+using BLL.Infra;
+using BLL.Transporte;
+using MPP.Finanzas;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Abstraccion;
-using BE.Finanzas;
-using BE.Enums;
-using BLL.Transversal;
-using MPP.Finanzas;
-using BE;
+using Transversales;
 
 namespace BLL.Finanzas
 {
@@ -27,38 +29,64 @@ namespace BLL.Finanzas
 
         #region "Guardar"
 
-        public void Guardar(BEFactura obj)
+        public void Guardar(BEFactura fc)
         {
             try
             {
-                // --- Validaciones estructurales ---
-                ValidadorBLL.ObjetoNoNulo(obj, "Factura");
-                ValidadorBLL.ObjetoNoNulo(obj.Booking, "Booking asociado");
+                ValidadorBLL.ObjetoNoNulo(fc, "Factura");
+                ValidadorBLL.ObjetoNoNulo(fc.Booking, "Booking asociado");
 
-                ValidadorBLL.CampoObligatorio(obj.NumeroFactura, "Número de factura");
-                if (obj.Subtotal <= 0)
+                // Solo se factura un booking asignado: ya pasó por asignación de buque/contenedor.
+                var bookingActual = ReconstructorBLL.Reconstruir<BEBooking>(fc.Booking.Id);
+
+                if (bookingActual == null)
+                    throw new Exception("No se encontró el booking asociado a la factura.");
+
+                if (bookingActual.Estado == null || bookingActual.Estado.Codigo != EstadoBooking.Asignado.Codigo)
+                    throw new Exception("Solo se pueden facturar bookings asignados.");
+
+                fc.Estado = EstadoFactura.Emitida;
+
+                if (fc.Id != 0)
+                    ValidadorBLL.CampoObligatorio(fc.NumeroFactura, "Número de factura");
+
+                if (fc.Subtotal <= 0)
                     throw new Exception("El subtotal debe ser mayor a cero.");
 
-                if (obj.Impuesto < 0)
+                if (fc.Impuesto < 0)
                     throw new Exception("El impuesto no puede ser negativo.");
 
-                if (obj.Fecha > DateTime.Now)
+                if (fc.Fecha > DateTime.Now)
                     throw new Exception("La fecha de la factura no puede ser futura.");
 
-                // --- Reglas de negocio ---
-                if (obj.Estado == EstadoFacturaEnum.Anulada)
+                if (fc.Estado == EstadoFactura.Anulada)
                     throw new Exception("No se puede guardar una factura anulada.");
 
-                // Cálculo total
-                obj.Total = obj.Subtotal + obj.Impuesto;
+                // El total se calcula en BLL para que la UI no decida importes finales.
+                fc.Total = fc.Subtotal + fc.Impuesto;
 
-                // --- Persistencia ---
-                if (obj.Id == 0)
-                    facturaMPP.Alta(obj);
+                var existentes = facturaMPP.Listar();
+
+                bool yaFacturado = existentes.Any(f =>
+                    f.Booking != null &&
+                    f.Booking.Id == fc.Booking.Id &&
+                    f.Id != fc.Id &&
+                    (f.Estado == null || f.Estado.Codigo != EstadoFactura.Anulada.Codigo)
+                );
+
+                if (yaFacturado)
+                    throw new Exception("Este booking ya fue facturado. No se puede emitir una nueva factura para el mismo booking.");
+
+                if (fc.Id == 0)
+                    facturaMPP.Alta(fc);
                 else
-                    facturaMPP.Modificar(obj);
+                    facturaMPP.Modificar(fc);
 
-                // Limpiar caché del reconstructor
+                // Si la factura se emite correctamente, la BLL actualiza el booking a Facturado.
+                var bookingBLL = new BookingBLL();
+                bookingBLL.ActualizarEstado(bookingActual, EstadoBooking.Facturado);
+
+                ReconstructorBLL.LimpiarCache<BEBooking>();
                 ReconstructorBLL.LimpiarCache<BEFactura>();
             }
             catch (Exception ex)
@@ -69,7 +97,7 @@ namespace BLL.Finanzas
 
         #endregion
 
-        #region "Eliminar"
+        #region "Anular"
 
         public void Eliminar(BEFactura obj)
         {
@@ -77,20 +105,64 @@ namespace BLL.Finanzas
             {
                 ValidadorBLL.ObjetoNoNulo(obj, "Factura");
 
-                if (obj.Estado == EstadoFacturaEnum.Pagada)
-                    throw new Exception("No se puede eliminar una factura ya pagada.");
+                // Se consulta la factura persistida para validar con el estado real, no con datos incompletos de UI.
+                var actual = facturaMPP.BuscarPorId(obj.Id);
+                if (actual == null)
+                    throw new Exception("No se encontró la factura para anular.");
 
-                facturaMPP.Baja(obj);
+                if (actual.Estado != null && actual.Estado.Codigo == EstadoFactura.Pagada.Codigo)
+                    throw new Exception("No se puede anular una factura ya pagada.");
+
+                if (actual.Estado != null && actual.Estado.Codigo == EstadoFactura.Anulada.Codigo)
+                    throw new Exception("La factura ya se encuentra anulada.");
+
+                // Anular es una baja lógica: la factura queda registrada, pero no operativa.
+                facturaMPP.Baja(actual);
+
                 ReconstructorBLL.LimpiarCache<BEFactura>();
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al eliminar factura.", ex);
+                throw new Exception("Error al anular factura.", ex);
             }
         }
 
         #endregion
+        #region "Marcar como pagada"
 
+        public void MarcarComoPagada(BEFactura factura)
+        {
+            try
+            {
+                ValidadorBLL.ObjetoNoNulo(factura, "Factura");
+
+                if (factura.Id <= 0)
+                    throw new Exception("La factura no tiene un Id válido.");
+
+                var actual = facturaMPP.BuscarPorId(factura.Id);
+
+                if (actual == null)
+                    throw new Exception("No se encontró la factura indicada.");
+
+                if (actual.Estado != null && actual.Estado.Codigo == EstadoFactura.Anulada.Codigo)
+                    throw new Exception("No se puede pagar una factura anulada.");
+
+                if (actual.Estado != null && actual.Estado.Codigo == EstadoFactura.Pagada.Codigo)
+                    throw new Exception("La factura ya se encuentra pagada.");
+
+                actual.Estado = EstadoFactura.Pagada;
+
+                facturaMPP.Modificar(actual);
+
+                ReconstructorBLL.LimpiarCache<BEFactura>();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al marcar la factura como pagada.", ex);
+            }
+        }
+
+        #endregion
         #region "Listar / Buscar"
 
         public List<BEFactura> ListarTodo()
@@ -113,13 +185,13 @@ namespace BLL.Finanzas
             }
         }
 
-        public BEFactura ListarObjeto(BEFactura obj)
+        public BEFactura ListarObjeto(BEFactura fc)
         {
             try
             {
-                ValidadorBLL.ObjetoNoNulo(obj, "Factura");
+                ValidadorBLL.ObjetoNoNulo(fc, "Factura");
 
-                var factura = facturaMPP.BuscarPorId(obj.Id);
+                var factura = facturaMPP.BuscarPorId(fc.Id);
                 if (factura != null && factura.Booking != null && factura.Booking.Id > 0)
                     factura.Booking = ReconstructorBLL.Reconstruir<BEBooking>(factura.Booking.Id);
 
@@ -144,6 +216,17 @@ namespace BLL.Finanzas
             catch (Exception ex)
             {
                 throw new Exception("Error al obtener último Id de factura.", ex);
+            }
+        }
+        public string ObtenerProximoNumeroPreview(TipoFactura tipo)
+        {
+            try
+            {
+                return GeneradorNumeros.ObtenerProximoNumeroFactura(tipo);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al generar número de vista previa de factura.", ex);
             }
         }
 

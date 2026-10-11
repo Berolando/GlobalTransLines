@@ -1,18 +1,21 @@
-﻿using BE.Enums;
+﻿using BE.Dominio;
+using BE.Personas;
+using BE.ServiciosSubcontratados;
+using BE.Transporte;
 using System;
 using System.Collections.Generic;
 
 namespace BE.Finanzas
 {
-    public class BEOrdenDeCompra:BEEntidad
+    public class BEOrdenDeCompra : BEEntidad
     {
         #region "Propiedades"
         public string Numero { get; set; }
         public BEProveedor Proveedor { get; set; }
-        public BEBooking BookingOrigen { get; set; }   // 🔹 Nueva propiedad
+        public BEBooking BookingOrigen { get; set; }  
         public List<BEServicioSubcontratado> Servicios { get; set; } = new List<BEServicioSubcontratado>();
         public DateTime FechaEmision { get; set; }
-        public EstadoOrdenCompraEnum Estado { get; set; }
+        public EstadoOrdenCompra Estado { get; set; }
         public decimal ImporteTotal { get; set; }
         #endregion
 
@@ -21,14 +24,14 @@ namespace BE.Finanzas
 
         public BEOrdenDeCompra(string numero, BEProveedor proveedor, BEBooking bookingOrigen,
                                List<BEServicioSubcontratado> servicios, DateTime fecha,
-                               EstadoOrdenCompraEnum estado, decimal importeTotal)
+                                decimal importeTotal)
         {
             Numero = numero;
             Proveedor = proveedor;
             BookingOrigen = bookingOrigen;
             Servicios = servicios ?? new List<BEServicioSubcontratado>();
             FechaEmision = fecha;
-            Estado = estado;
+            Estado = EstadoOrdenCompra.Emitida;
             ImporteTotal = importeTotal;
         }
         #endregion

@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MPP", "MPP\MPP.csproj", "{C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Seguridad", "Seguridad\Seguridad.csproj", "{82B836B5-69A7-4674-83F5-5476891988DC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Transversales", "Transversales\Transversales.csproj", "{2462D16A-FB35-4542-9D41-D55096D0E2FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{82B836B5-69A7-4674-83F5-5476891988DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82B836B5-69A7-4674-83F5-5476891988DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82B836B5-69A7-4674-83F5-5476891988DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2462D16A-FB35-4542-9D41-D55096D0E2FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2462D16A-FB35-4542-9D41-D55096D0E2FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2462D16A-FB35-4542-9D41-D55096D0E2FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2462D16A-FB35-4542-9D41-D55096D0E2FA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,17 +1,13 @@
-﻿using BE.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BE.Dominio;
 
-namespace BE
+
+namespace BE.Personas
 {
-    public class BECliente:BEPersona
+    public class BECliente : BEPersona
     {
         #region "Propiedades"
         public string Cuit { get; set; }
-        public CondicionFiscalEnum CondicionFiscal { get; set; }
+        public CondicionFiscal CondicionFiscal { get; set; }
         public string RazonSocial { get; set; }
         #endregion
 
@@ -23,6 +19,12 @@ namespace BE
         public override string ObtenerContacto()
         {
             return $"{RazonSocial} - CUIT: {Cuit} - Tel: {Telefono} - Email: {Email}";
+        }
+        public override string ToString()
+        {
+            return !string.IsNullOrWhiteSpace(RazonSocial)
+                ? RazonSocial
+                : $"{Nombre} {Apellido}";
         }
         #endregion
     }

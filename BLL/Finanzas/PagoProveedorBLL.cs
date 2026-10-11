@@ -1,11 +1,11 @@
-ï»¿using System;
+using Abstraccion;
+using BE.Dominio;
+using BE.Finanzas;
+using BLL.Infra;
+using MPP.Finanzas;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Abstraccion;
-using BE.Enums;
-using BE.Finanzas;
-using MPP.Finanzas;
-using BLL.Transversal;
 
 namespace BLL.Finanzas
 {
@@ -16,7 +16,7 @@ namespace BLL.Finanzas
         private TarjetaMPP tarjetaMPP = new TarjetaMPP();
         private TransferenciaMPP transferenciaMPP = new TransferenciaMPP();
 
-        #region "Constructor estÃ¡tico"
+        #region "Constructor estático"
 
         static PagoProveedorBLL()
         {
@@ -33,22 +33,30 @@ namespace BLL.Finanzas
         {
             try
             {
-                // --- Validaciones bÃ¡sicas ---
                 ValidadorBLL.ObjetoNoNulo(obj, "Pago a proveedor");
                 ValidadorBLL.ObjetoNoNulo(obj.OrdenDeCompra, "Orden de compra asociada");
                 ValidadorBLL.ObjetoNoNulo(obj.MedioDePago, "Medio de pago");
+                ValidadorBLL.CampoObligatorio(obj.NumeroFacturaProveedor, "Número de factura del proveedor");
 
                 if (obj.Importe <= 0)
                     throw new Exception("El importe del pago debe ser mayor a cero.");
 
-                // --- Validaciones especÃ­ficas por tipo de medio ---
+                if (obj.ImporteFacturaProveedor <= 0)
+                    throw new Exception("El importe de la factura del proveedor debe ser mayor a cero.");
+
+                if (obj.FechaFacturaProveedor > DateTime.Now)
+                    throw new Exception("La fecha de factura del proveedor no puede ser futura.");
+
+                if (obj.FechaPago > DateTime.Now)
+                    throw new Exception("La fecha de pago no puede ser futura.");
+
                 if (obj.MedioDePago is BETarjeta tarjeta)
                 {
                     if (tarjeta.Vencimiento <= DateTime.Now)
                         throw new Exception("La tarjeta indicada se encuentra vencida.");
 
                     if (string.IsNullOrWhiteSpace(tarjeta.CVV))
-                        throw new Exception("Debe indicar el cÃ³digo CVV de la tarjeta.");
+                        throw new Exception("Debe indicar el código CVV de la tarjeta.");
 
                     if (tarjeta.Id == 0)
                         tarjetaMPP.Alta(tarjeta);
@@ -80,7 +88,6 @@ namespace BLL.Finanzas
                         efectivoMPP.Modificar(efectivo);
                 }
 
-                // --- Persistencia principal ---
                 if (obj.Id == 0)
                     pagoProveedorMPP.Alta(obj);
                 else
@@ -178,6 +185,55 @@ namespace BLL.Finanzas
             }
         }
 
+        public List<BEOrdenDeCompra> ListarOrdenesRecibidas()
+        {
+            try
+            {
+                return new OrdenCompraBLL().ListarTodo()
+                    .Where(oc => oc.Estado != null &&
+                                 oc.Estado.Codigo == EstadoOrdenCompra.Recibida.Codigo)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al listar órdenes de compra recibidas.", ex);
+            }
+        }
+
+        #endregion
+
+        #region "Flujo de compras"
+
+        public void RegistrarPago(BEPagoProveedor pago)
+        {
+            try
+            {
+                ValidadorBLL.ObjetoNoNulo(pago, "Pago a proveedor");
+                ValidadorBLL.ObjetoNoNulo(pago.OrdenDeCompra, "Orden de compra asociada");
+
+                var ordenBLL = new OrdenCompraBLL();
+                var orden = ordenBLL.ListarObjeto(new BEOrdenDeCompra { Id = pago.OrdenDeCompra.Id });
+
+                if (orden == null)
+                    throw new Exception("No se encontró la orden de compra especificada.");
+
+                if (orden.Estado == null || orden.Estado.Codigo != EstadoOrdenCompra.Recibida.Codigo)
+                    throw new Exception("Solo se puede registrar el pago de una orden recibida.");
+
+                // Se persiste la relación por Id para mantener el mismo criterio usado en los XML.
+                pago.OrdenDeCompra = new BEOrdenDeCompra { Id = orden.Id };
+                pago.Estado = EstadoPago.Pagado;
+
+                Guardar(pago);
+                // El pago cierra el circuito de compras: la OC pasa de REC a PAG.
+                ordenBLL.MarcarPagada(orden);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al registrar el pago a proveedor.", ex);
+            }
+        }
+
         #endregion
 
         #region "Utilitarios"
@@ -190,7 +246,7 @@ namespace BLL.Finanzas
             }
             catch (Exception ex)
             {
-                throw new Exception("Error al obtener Ãºltimo Id de pago a proveedor.", ex);
+                throw new Exception("Error al obtener último Id de pago a proveedor.", ex);
             }
         }
 

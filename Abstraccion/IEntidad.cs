@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Abstraccion
+﻿namespace Abstraccion
 {
+    // Contrato base para que todas las entidades tengan un identificador común.
     public interface IEntidad
     {
         long Id { get; set; }

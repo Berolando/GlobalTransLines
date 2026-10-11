@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;       // Permite usar [Category] y [Description] en propiedades
-using System.Text.RegularExpressions; // Usamos Regex para validar formatos
 using System.Windows.Forms;
 
 namespace GlobalTransLines.UI.Controles
@@ -8,33 +7,32 @@ namespace GlobalTransLines.UI.Controles
     public partial class UCValidaciones : UserControl
     {
         #region "Enum"
-        // Define los distintos tipos de campo que este control puede validar automáticamente.
-        
+
         public enum TipoCampoEnum
         {
             Texto,          // Sin restricción específica 
             SoloLetras,     // Acepta únicamente letras y espacios
+            Numeros,        // Acepta únicamente dígitos numéricos
             DNI,            // Valida un número de 7 u 8 dígitos
-            CUIT,           // Valida el formato NN-NNNNNNNN-N
-            Email,          // Valida el formato típico de correo electrónico
-            Telefono        // Valida entre 7 y 15 dígitos, con prefijo opcional "+"
+            CUIT,           // Valida CUIT con 11 dígitos, con o sin guiones
+            Email,          // Valida formato básico de correo electrónico
+            Telefono        // Valida teléfono con dígitos y caracteres habituales
         }
+
         #endregion
 
         #region "Propiedades privadas"
+
         // Campo interno para recordar qué tipo de validación está activo
         private TipoCampoEnum _tipoCampo = TipoCampoEnum.Texto;
 
-        // Guarda la expresión regular que se usará en la validación
-        private string _regexActual = string.Empty;
-
         // Mensaje mostrado cuando la validación falla
         private string _mensajeError = "Formato inválido.";
+
         #endregion
 
         #region "Propiedades públicas"
 
-        // Propiedad visible en el diseñador para elegir el tipo de campo (Texto, DNI, CUIT, etc.)
         [Category("Validación")]
         [Description("Selecciona el tipo de campo para aplicar validación automática.")]
         public TipoCampoEnum TipoCampo
@@ -43,7 +41,7 @@ namespace GlobalTransLines.UI.Controles
             set
             {
                 _tipoCampo = value;
-                ConfigurarRegex(); // Actualiza el patrón y mensaje según el tipo elegido
+                ConfigurarMensaje();
             }
         }
 
@@ -74,95 +72,232 @@ namespace GlobalTransLines.UI.Controles
         #endregion
 
         #region "Inicialización"
-        // Constructor: inicializa los componentes del control
+
         public UCValidaciones()
         {
             InitializeComponent();
+            ConfigurarMensaje();
         }
+
         #endregion
 
         #region "Lógica interna"
-        // Asigna la expresión regular y el mensaje de error según el tipo de campo seleccionado.
-        // Esta lógica se ejecuta automáticamente cada vez que se cambia la propiedad TipoCampo.
-        private void ConfigurarRegex()
+
+        private void ConfigurarMensaje()
         {
             switch (_tipoCampo)
             {
                 case TipoCampoEnum.SoloLetras:
-                    // Solo letras (mayúsculas, minúsculas, tildes y Ñ)
-                    _regexActual = "^[A-Za-zÁÉÍÓÚáéíóúñÑ\\s]+$";
-                    _mensajeError = "Solo se permiten letras.";
+                    _mensajeError = "Error Validacion, Solo se permiten letras y espacios. UC";
                     break;
 
                 case TipoCampoEnum.DNI:
-                    // Entre 7 y 8 dígitos numéricos
-                    _regexActual = "^\\d{7,8}$";
-                    _mensajeError = "El DNI debe tener 7 u 8 dígitos.";
+                    _mensajeError = "Error Validacion, El DNI debe tener 7 u 8 dígitos UC.";
                     break;
 
                 case TipoCampoEnum.CUIT:
-                    // Formato estándar NN-NNNNNNNN-N
-                    _regexActual = "^\\d{2}-\\d{8}-\\d{1}$";
-                    _mensajeError = "El CUIT debe tener el formato NN-NNNNNNNN-N.";
+                    _mensajeError = "Error Validación, el CUIT debe tener 11 dígitos numéricos UC.";
                     break;
 
                 case TipoCampoEnum.Email:
-                    // Formato de correo electrónico simple
-                    _regexActual = "^[\\w\\.-]+@[\\w\\.-]+\\.\\w{2,4}$";
-                    _mensajeError = "El formato del email no es válido.";
+                    _mensajeError = "Error Validacion, El formato del email no es válido UC.";
                     break;
 
                 case TipoCampoEnum.Telefono:
-                    // Números con entre 7 y 15 dígitos, opcionalmente con "+"
-                    _regexActual = "^\\+?\\d{7,15}$";
-                    _mensajeError = "El teléfono no tiene un formato válido.";
+                    _mensajeError = "Error Validacion, El teléfono no tiene un formato válido UC.";
+                    break;
+
+                case TipoCampoEnum.Numeros:
+                    _mensajeError = "Error Validacion, Solo se permiten números UC.";
                     break;
 
                 default:
-                    // Texto libre (no se valida con Regex)
-                    _regexActual = string.Empty;
-                    _mensajeError = "Formato inválido.";
+                    _mensajeError = "Error Validacion, Formato inválido UC.";
                     break;
             }
         }
+
+        private bool ValidarSoloLetras(string valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return false;
+
+            foreach (char c in valor)
+            {
+                if (!char.IsLetter(c) && c != ' ')
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidarSoloNumeros(string valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return false;
+
+            foreach (char c in valor)
+            {
+                if (!char.IsDigit(c))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool ValidarDNI(string valor)
+        {
+            if (!ValidarSoloNumeros(valor))
+                return false;
+
+            return valor.Length == 7 || valor.Length == 8;
+        }
+
+        private bool ValidarCUIT(string valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return false;
+
+            // Permite CUIT con o sin guiones:
+            // 20123456789
+            // 20-12345678-9
+            string limpio = valor.Replace("-", "").Replace(" ", "");
+
+            if (!ValidarSoloNumeros(limpio))
+                return false;
+
+            return limpio.Length == 11;
+        }
+
+        private bool ValidarEmail(string valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return false;
+
+            int posicionArroba = valor.IndexOf("@");
+            int ultimaArroba = valor.LastIndexOf("@");
+
+            // Debe tener una sola arroba y no puede estar al principio
+            if (posicionArroba <= 0)
+                return false;
+
+            if (posicionArroba != ultimaArroba)
+                return false;
+
+            string usuario = valor.Substring(0, posicionArroba);
+            string dominio = valor.Substring(posicionArroba + 1);
+
+            if (string.IsNullOrWhiteSpace(usuario))
+                return false;
+
+            if (string.IsNullOrWhiteSpace(dominio))
+                return false;
+
+            if (!dominio.Contains("."))
+                return false;
+
+            if (dominio.StartsWith(".") || dominio.EndsWith("."))
+                return false;
+
+            return true;
+        }
+
+        private bool ValidarTelefono(string valor)
+        {
+            if (string.IsNullOrWhiteSpace(valor))
+                return false;
+
+            int cantidadDigitos = 0;
+
+            foreach (char c in valor)
+            {
+                if (char.IsDigit(c))
+                {
+                    cantidadDigitos++;
+                }
+                else
+                {
+                    bool caracterPermitido =
+                        c == '+' ||
+                        c == '-' ||
+                        c == ' ' ||
+                        c == '(' ||
+                        c == ')';
+
+                    if (!caracterPermitido)
+                        return false;
+                }
+            }
+
+            return cantidadDigitos >= 7 && cantidadDigitos <= 15;
+        }
+
         #endregion
 
         #region "Métodos públicos"
-        // Valida el texto actual según el patrón configurado.
-        // Retorna true si el valor cumple con la expresión regular, false en caso contrario.
-        // Si el tipo es "Texto" (sin regex), siempre devuelve true.
+
         public bool EsValido()
         {
-            // Si no hay regex definida, no se realiza validación.
-            if (string.IsNullOrWhiteSpace(_regexActual))
-                return true;
+            string valor = txtEntrada.Text.Trim();
+            bool valido = true;
 
-            // Evalúa si el texto cumple con el patrón.
-            bool valido = Regex.IsMatch(txtEntrada.Text, _regexActual);
+            switch (_tipoCampo)
+            {
+                case TipoCampoEnum.Texto:
+                    valido = true;
+                    break;
 
-            // Muestra u oculta el ícono de error en el control.
+                case TipoCampoEnum.SoloLetras:
+                    valido = ValidarSoloLetras(valor);
+                    break;
+
+                case TipoCampoEnum.Numeros:
+                    valido = ValidarSoloNumeros(valor);
+                    break;
+
+                case TipoCampoEnum.DNI:
+                    valido = ValidarDNI(valor);
+                    break;
+
+                case TipoCampoEnum.CUIT:
+                    valido = ValidarCUIT(valor);
+                    break;
+
+                case TipoCampoEnum.Email:
+                    valido = ValidarEmail(valor);
+                    break;
+
+                case TipoCampoEnum.Telefono:
+                    valido = ValidarTelefono(valor);
+                    break;
+            }
+
             errorProvider1.SetError(txtEntrada, valido ? "" : _mensajeError);
             txtEntrada.BackColor = valido ? System.Drawing.Color.White : System.Drawing.Color.MistyRose;
 
             return valido;
         }
+
         private void txtEntrada_Leave(object sender, EventArgs e)
         {
             if (!EsValido())
             {
-                MessageBox.Show(_mensajeError, "Validación de campo",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                
+                MessageBox.Show(_mensajeError,
+                                "Validación de campo",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Warning);
             }
         }
+
         #endregion
 
         #region "Eventos"
+
         private void UCValidaciones_Load(object sender, EventArgs e)
         {
-            // Evento de carga del control (opcional)
-            // Podrías usarlo para asignar valores por defecto si lo necesitás.
+
         }
+
         #endregion
     }
 }

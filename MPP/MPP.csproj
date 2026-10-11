@@ -44,12 +44,15 @@
     <Compile Include="Finanzas\EfectivoMPP.cs" />
     <Compile Include="Finanzas\PagoMPP.cs" />
     <Compile Include="Finanzas\PagoProveedorMPP.cs" />
+    <Compile Include="Finanzas\TarifarioMPP.cs" />
     <Compile Include="Finanzas\TarjetaMPP.cs" />
     <Compile Include="Finanzas\TransferenciaMPP.cs" />
-    <Compile Include="Transversal\BackupMPP.cs" />
+    <Compile Include="Transporte\AsignacionMPP.cs" />
+    <Compile Include="Infra\BackupMPP.cs" />
     <Compile Include="Finanzas\CotizacionMPP.cs" />
     <Compile Include="Finanzas\FacturaMPP.cs" />
     <Compile Include="Finanzas\OrdenCompraMPP.cs" />
+    <Compile Include="Finanzas\RequerimientoCompraMPP.cs" />
     <Compile Include="Personas\ClienteMPP.cs" />
     <Compile Include="Personas\EmpleadoMPP.cs" />
     <Compile Include="Personas\ProveedorMPP.cs" />
@@ -60,20 +63,14 @@
     <Compile Include="Transporte\BookingMPP.cs" />
     <Compile Include="Transporte\BuqueMPP.cs" />
     <Compile Include="Transporte\CargaMPP.cs" />
-    <Compile Include="Transporte\ConsolidacionMPP.cs" />
     <Compile Include="Transporte\ContenedorMPP.cs" />
-    <Compile Include="Transporte\EstibaMPP.cs" />
     <Compile Include="Transporte\ManifiestoMPP.cs" />
-    <Compile Include="Transversal\BitacoraMPP.cs" />
-    <Compile Include="Transversal\CompositeMPP.cs" />
-    <Compile Include="Transversal\AdministradorArchivos.cs" />
-    <Compile Include="Transversal\AdministradorArchivosIndividuales.cs" />
-    <Compile Include="Transversal\DireccionMPP.cs" />
-    <Compile Include="Transversal\GeneradorNumeros.cs" />
-    <Compile Include="Transversal\GeneradorRutas.cs" />
-    <Compile Include="Transversal\PermisoMPP.cs" />
-    <Compile Include="Transversal\RolMPP.cs" />
-    <Compile Include="Transversal\UsuarioMPP.cs" />
+    <Compile Include="Infra\CompositeMPP.cs" />
+    <Compile Include="Infra\DireccionMPP.cs" />
+    <Compile Include="Infra\EventoMPP.cs" />
+    <Compile Include="Infra\PermisoMPP.cs" />
+    <Compile Include="Infra\RolMPP.cs" />
+    <Compile Include="Infra\UsuarioMPP.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Abstraccion\Abstraccion.csproj">
@@ -88,6 +85,13 @@
       <Project>{82b836b5-69a7-4674-83f5-5476891988dc}</Project>
       <Name>Seguridad</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Transversales\Transversales.csproj">
+      <Project>{2462d16a-fb35-4542-9d41-d55096d0e2fa}</Project>
+      <Name>Transversales</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

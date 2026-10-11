@@ -1,11 +1,11 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Finanzas;
+using Transversales;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE.Finanzas;
-using MPP.Transversal;
 
 namespace MPP.Finanzas
 {
@@ -29,7 +29,7 @@ namespace MPP.Finanzas
                     new XElement("Titular", obj.Titular),
                     new XElement("Vencimiento", obj.Vencimiento),
                     new XElement("CVV", obj.CVV),
-                    new XElement("Marca", obj.Marca),
+                    new XElement("Tipo", obj.Marca),
                     new XElement("BancoEmisor", obj.BancoEmisor)
                 );
 
@@ -109,7 +109,7 @@ namespace MPP.Finanzas
                     nodo.SetElementValue("Titular", obj.Titular);
                     nodo.SetElementValue("Vencimiento", obj.Vencimiento);
                     nodo.SetElementValue("CVV", obj.CVV);
-                    nodo.SetElementValue("Marca", obj.Marca);
+                    nodo.SetElementValue("Tipo", obj.Marca);
                     nodo.SetElementValue("BancoEmisor", obj.BancoEmisor);
 
                     doc.Save(ruta);
@@ -148,7 +148,7 @@ namespace MPP.Finanzas
                               Titular = (string)x.Element("Titular") ?? string.Empty,
                               Vencimiento = (DateTime?)x.Element("Vencimiento") ?? DateTime.MinValue,
                               CVV = (string)x.Element("CVV") ?? string.Empty,
-                              Marca = (string)x.Element("Marca") ?? string.Empty,
+                              Marca = (string)x.Element("Tipo") ?? string.Empty,
                               BancoEmisor = (string)x.Element("BancoEmisor") ?? string.Empty
                           }).ToList();
             }

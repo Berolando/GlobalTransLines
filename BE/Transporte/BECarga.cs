@@ -1,30 +1,36 @@
-﻿using BE.Enums;
+﻿using BE.Dominio;
+using BE.Infra;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BE.Transversal;
 
-namespace BE
+namespace BE.Transporte
 {
     public class BECarga : BEEntidad
     {
         #region Propiedades
+
+        public string Codigo { get; set; }
         public string Descripcion { get; set; }
-        public TipoCargaEnum Tipo { get; set; }
-        public decimal Peso { get; set; }      // en toneladas o kg
-        public decimal Volumen { get; set; }   // en m3
+        public TipoCarga Tipo { get; set; }
+        public TipoContenedor TipoContenedor { get; set; }
+        public EstadoCarga Estado { get; set; }
+        public decimal Peso { get; set; }      // En kilogramos
+        public decimal Volumen { get; set; }   // En metros cúbicos
         public BEDireccion Origen { get; set; }
+        public BEDireccion PuertoEmbarque { get; set; }
         public BEDireccion Destino { get; set; }
         public DateTime FechaRegistro { get; set; }
         public DateTime FechaEntregaEstimada { get; set; }
+
+        public decimal PesoKg{get { return Peso; } }
+
+        public decimal VolumenM3 {get { return Volumen; } }
+
         #endregion
 
         #region Constructores
         public BECarga() { }
 
-        public BECarga(string descripcion, TipoCargaEnum tipo, decimal peso, decimal volumen,
+        public BECarga(string descripcion, TipoCarga tipo, decimal peso, decimal volumen,
                        BEDireccion origen, BEDireccion destino,
                        DateTime fechaRegistro, DateTime fechaEntregaEstimada)
         {
@@ -39,11 +45,12 @@ namespace BE
         }
         #endregion
 
-        #region Métodos
+        #region "Métodos"
         public override string ToString()
         {
-            return $"Carga {Descripcion} ({Tipo}) - {Peso} tn / {Volumen} m3 - {Origen?.Ciudad} → {Destino?.Ciudad}";
+            return $"Carga {Descripcion} - {Tipo} | {Peso} kg | {Volumen} m³";
         }
         #endregion
     }
 }
+

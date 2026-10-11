@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BE.Personas;
+using System;
 
-namespace BE
+namespace BE.Transporte
 {
     public class BEBillofLading : BEEntidad
     {

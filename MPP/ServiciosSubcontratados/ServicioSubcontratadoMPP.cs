@@ -1,17 +1,18 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Personas;
+using BE.ServiciosSubcontratados;
+using Transversales;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using MPP.Transversal;
 
 namespace MPP.ServiciosSubcontratados
 {
     public class ServicioSubcontratadoMPP : IRepositorio<BEServicioSubcontratado>
     {
-        private  string ruta = GeneradorRutas.UbicacionEntidad<BEServicioSubcontratado>();
+        private string ruta = GeneradorRutas.UbicacionEntidad<BEServicioSubcontratado>();
 
         #region "Alta"
 

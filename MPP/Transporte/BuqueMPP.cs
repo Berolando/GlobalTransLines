@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Abstraccion;
+using BE.Dominio;
+using BE.Transporte;
+using Transversales;
+using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-using Abstraccion;
-using BE;
-using BE.Enums;
-using MPP.Transversal;
 
 namespace MPP.Flota
 {
@@ -23,22 +24,23 @@ namespace MPP.Flota
                 // Cargar documento XML
                 var doc = XDocument.Load(ruta);
                 obj.Id = ObtenerUltimoId() + 1;
+                obj.Codigo = GeneradorNumeros.GenerarNumero(typeof(BEBuque), obj.Id);
 
                 // Crear nodo Buque
                 var nuevoBuque = new XElement("Buque",
-                    new XAttribute("Id", obj.Id),
-                    new XElement("Nombre", obj.Nombre ?? string.Empty),
-                    new XElement("CodigoIMO", obj.CodigoIMO ?? string.Empty),
-                    new XElement("CapacidadTEU", obj.CapacidadTEU),
-                    new XElement("CapacidadPeso", obj.CapacidadPeso),
-                    new XElement("Disponibilidad", obj.Disponibilidad),
-                    new XElement("Estado", obj.Estado.ToString()),
-                    new XElement("Itinerarios",
-                        obj.Itinerarios != null
-                            ? obj.Itinerarios.Select(i => new XElement("Itinerario", i))
-                            : null
-                    )
-                );
+                                new XAttribute("Id", obj.Id),
+                                new XElement("Codigo", obj.Codigo ?? string.Empty),
+                                new XElement("Nombre", obj.Nombre ?? string.Empty),
+                                new XElement("CodigoIMO", obj.CodigoIMO ?? string.Empty),
+                                new XElement("CapacidadTEU", obj.CapacidadTEU),
+                                new XElement("CapacidadPeso", obj.CapacidadPeso),
+                                new XElement("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty),
+                                new XElement("ItinerarioPuertos",
+                                    (obj.ItinerarioPuertoIds != null && obj.ItinerarioPuertoIds.Any())
+                                        ? obj.ItinerarioPuertoIds.Select(id => new XElement("PuertoId", id))
+                                        : null
+                                                )
+                                            );
 
                 // Agregar al documento
                 var root = doc.Element("Buques");
@@ -120,18 +122,19 @@ namespace MPP.Flota
                 // Actualizar si existe
                 if (buque != null)
                 {
+                    buque.SetElementValue("Codigo", obj.Codigo ?? string.Empty);
                     buque.SetElementValue("Nombre", obj.Nombre ?? string.Empty);
                     buque.SetElementValue("CodigoIMO", obj.CodigoIMO ?? string.Empty);
                     buque.SetElementValue("CapacidadTEU", obj.CapacidadTEU);
                     buque.SetElementValue("CapacidadPeso", obj.CapacidadPeso);
-                    buque.SetElementValue("Disponibilidad", obj.Disponibilidad);
-                    buque.SetElementValue("Estado", obj.Estado.ToString());
+                    buque.SetElementValue("Estado", obj.Estado != null ? obj.Estado.Codigo : string.Empty);
 
-                    // Actualizar itinerarios
+                    // El itinerario persiste solamente las relaciones por Id.
+                    buque.Element("ItinerarioPuertos")?.Remove();
                     buque.Element("Itinerarios")?.Remove();
-                    buque.Add(new XElement("Itinerarios",
-                        obj.Itinerarios != null
-                            ? obj.Itinerarios.Select(i => new XElement("Itinerario", i))
+                    buque.Add(new XElement("ItinerarioPuertos",
+                        obj.ItinerarioPuertoIds != null
+                            ? obj.ItinerarioPuertoIds.Select(id => new XElement("PuertoId", id))
                             : null
                     ));
 
@@ -171,35 +174,37 @@ namespace MPP.Flota
                           {
                               long id = (long?)x.Attribute("Id") ?? 0;
                               string nombre = (string)x.Element("Nombre") ?? string.Empty;
+                              string codigo = (string)x.Element("Codigo") ?? string.Empty;
                               string codigoIMO = (string)x.Element("CodigoIMO") ?? string.Empty;
 
                               int capacidadTEU;
                               int.TryParse((string)x.Element("CapacidadTEU"), out capacidadTEU);
 
                               decimal capacidadPeso;
-                              decimal.TryParse((string)x.Element("CapacidadPeso"), out capacidadPeso);
+                              decimal.TryParse((string)x.Element("CapacidadPeso"), NumberStyles.Any,
+                                  CultureInfo.InvariantCulture, out capacidadPeso);
 
-                              decimal disponibilidad;
-                              decimal.TryParse((string)x.Element("Disponibilidad"), out disponibilidad);
+                              
 
-                              EstadoBuqueEnum estado;
-                              Enum.TryParse((string)x.Element("Estado"), true, out estado);
+                              string codigoEstado = (string)x.Element("Estado") ?? string.Empty;
+                              var estado = EstadoBuque.ObtenerPorCodigo(codigoEstado);
 
-                              var itinerarios = x.Element("Itinerarios")?
-                                  .Elements("Itinerario")
-                                  .Select(i => (string)i ?? string.Empty)
-                                  .ToList() ?? new List<string>();
+                              var itinerarioPuertoIds = x.Element("ItinerarioPuertos")?
+                                  .Elements("PuertoId")
+                                  .Select(i => (long?)i ?? 0)
+                                  .Where(idPuerto => idPuerto > 0)
+                                  .ToList() ?? new List<long>();
 
                               return new BEBuque
                               {
                                   Id = id,
                                   Nombre = nombre,
+                                  Codigo = codigo,
                                   CodigoIMO = codigoIMO,
                                   CapacidadTEU = capacidadTEU,
                                   CapacidadPeso = capacidadPeso,
-                                  Disponibilidad = disponibilidad,
                                   Estado = estado,
-                                  Itinerarios = itinerarios
+                                  ItinerarioPuertoIds = itinerarioPuertoIds
                               };
                           }).ToList();
             }
